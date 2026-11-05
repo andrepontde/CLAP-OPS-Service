@@ -1,0 +1,27 @@
+[project]
+name = "clap-ops-service"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+authors = [
+    { name = "André Pont", email = "andrepontde@gmail.com" }
+]
+requires-python = ">=3.14"
+dependencies = [
+    "alembic>=1.20.1",
+    "fastapi[standard]>=0.162.0",
+    "pydantic>=2.14.2",
+    "pyjwt>=2.15.1",
+    "psycopg[binary]>=3.3.6",
+    "pwdlib[argon2]>=0.2.1",
+    "python-dotenv>=1.1.1",
+    "sqlalchemy>=2.1.8",
+]
+
+[project.scripts]
+clap-ops-service = "clap_ops_service:main"
+create-admin = "clap_ops_service.create_admin:main"
+
+[build-system]
+requires = ["uv_build>=0.12.16,<0.13.0"]
+build-backend = "uv_build"
