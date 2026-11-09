@@ -1,6 +1,7 @@
 from uuid import UUID
 
-from sqlalchemy.exc import SQLAlchemyError
+from psycopg.errors import ForeignKeyViolation
+from sqlalchemy.exc import IntegrityError, SQLAlchemyError
 from sqlalchemy.orm import Session
 
 from clap_ops_service.api.v1.schemas.work_order import (
@@ -21,6 +22,13 @@ class WorkOrderService:
         self.db.add(work_order)
         try:
             self.db.commit()
+        except IntegrityError as error:
+            self.db.rollback()
+            if isinstance(error.orig, ForeignKeyViolation):
+                raise ValueError("Vehicle not found") from error
+            raise RuntimeError(
+                "Unexpected database integrity error while creating work order"
+            ) from error
         except (SQLAlchemyError, OSError) as error:
             self.db.rollback()
             raise RuntimeError(
@@ -57,6 +65,13 @@ class WorkOrderService:
         try:
             self.db.commit()
             self.db.refresh(work_order)
+        except IntegrityError as error:
+            self.db.rollback()
+            if isinstance(error.orig, ForeignKeyViolation):
+                raise ValueError("Vehicle not found") from error
+            raise RuntimeError(
+                "Unexpected database integrity error while updating work order"
+            ) from error
         except (SQLAlchemyError, OSError) as error:
             self.db.rollback()
             raise RuntimeError(

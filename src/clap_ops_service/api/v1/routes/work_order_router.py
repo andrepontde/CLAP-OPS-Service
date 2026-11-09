@@ -38,6 +38,8 @@ def create_work_order(
 ) -> WorkOrderResponse:
     try:
         return WorkOrderService(db).create_work_order(work_order)
+    except ValueError as error:
+        raise _not_found(error) from error
     except RuntimeError as error:
         raise _server_error(error) from error
 
