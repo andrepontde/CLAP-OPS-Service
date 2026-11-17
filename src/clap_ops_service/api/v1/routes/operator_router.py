@@ -29,7 +29,13 @@ def create_operator(
     db: Session = Depends(get_db),
     current_admin: Admin = Depends(get_current_admin),
 ) -> OperatorResponse:
-    return OperatorService(db).create_operator(operator)
+    try:
+        return OperatorService(db).create_operator(operator)
+    except ValueError as error:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail=str(error),
+        ) from error
 
 
 @operator_router.get("", response_model=OperatorList)
@@ -62,6 +68,11 @@ def update_operator(
     try:
         return OperatorService(db).update_operator(operator_id, operator)
     except ValueError as error:
+        if "not found" not in str(error):
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT,
+                detail=str(error),
+            ) from error
         raise _not_found(error) from error
 
 

@@ -1,6 +1,7 @@
 from uuid import UUID
 
-from sqlalchemy.exc import SQLAlchemyError
+from psycopg.errors import UniqueViolation
+from sqlalchemy.exc import IntegrityError, SQLAlchemyError
 from sqlalchemy.orm import Session
 
 from clap_ops_service.api.v1.schemas.operator import OperatorCreate, OperatorUpdate
@@ -12,12 +13,17 @@ class OperatorService:
         self.db = db
 
     def create_operator(self, operator_data: OperatorCreate) -> Operator:
-        operator = Operator(
-            **operator_data.model_dump(exclude={"created_at"})
-        )
+        operator = Operator(**operator_data.model_dump(exclude={"created_at"}))
         self.db.add(operator)
         try:
             self.db.commit()
+        except IntegrityError as error:
+            self.db.rollback()
+            if isinstance(error.orig, UniqueViolation):
+                raise ValueError("An operator with this employee_code already exists") from error
+            raise RuntimeError(
+                "Unexpected database integrity error while creating operator"
+            ) from error
         except (SQLAlchemyError, OSError) as error:
             self.db.rollback()
             raise RuntimeError(
@@ -33,7 +39,7 @@ class OperatorService:
         return operator
 
     def list_operators(self) -> list[Operator]:
-        return self.db.query(Operator).order_by(Operator.full_name).all()
+        return self.db.query(Operator).order_by(Operator.name).all()
 
     def update_operator(
         self, operator_id: UUID, operator_data: OperatorUpdate
@@ -44,6 +50,13 @@ class OperatorService:
         try:
             self.db.commit()
             self.db.refresh(operator)
+        except IntegrityError as error:
+            self.db.rollback()
+            if isinstance(error.orig, UniqueViolation):
+                raise ValueError("An operator with this employee_code already exists") from error
+            raise RuntimeError(
+                "Unexpected database integrity error while updating operator"
+            ) from error
         except (SQLAlchemyError, OSError) as error:
             self.db.rollback()
             raise RuntimeError(
