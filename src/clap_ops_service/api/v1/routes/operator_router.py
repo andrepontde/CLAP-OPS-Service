@@ -12,12 +12,13 @@ from clap_ops_service.api.v1.schemas.operator import (
 )
 from clap_ops_service.database import get_db
 from clap_ops_service.database.models import Admin
+from clap_ops_service.services.exceptions import ConflictError, NotFoundError
 from clap_ops_service.services.operator_service import OperatorService
 
 operator_router = APIRouter(prefix="/operators", tags=["operators"])
 
 
-def _not_found(error: ValueError) -> HTTPException:
+def _not_found(error: NotFoundError) -> HTTPException:
     return HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(error))
 
 
@@ -31,7 +32,7 @@ def create_operator(
 ) -> OperatorResponse:
     try:
         return OperatorService(db).create_operator(operator)
-    except ValueError as error:
+    except ConflictError as error:
         raise HTTPException(
             status_code=status.HTTP_409_CONFLICT,
             detail=str(error),
@@ -54,7 +55,7 @@ def get_operator(
 ) -> OperatorResponse:
     try:
         return OperatorService(db).get_operator(operator_id)
-    except ValueError as error:
+    except NotFoundError as error:
         raise _not_found(error) from error
 
 
@@ -67,13 +68,13 @@ def update_operator(
 ) -> OperatorResponse:
     try:
         return OperatorService(db).update_operator(operator_id, operator)
-    except ValueError as error:
-        if "not found" not in str(error):
-            raise HTTPException(
-                status_code=status.HTTP_409_CONFLICT,
-                detail=str(error),
-            ) from error
+    except NotFoundError as error:
         raise _not_found(error) from error
+    except ConflictError as error:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail=str(error),
+        ) from error
 
 
 @operator_router.delete(
@@ -86,5 +87,5 @@ def delete_operator(
 ) -> None:
     try:
         OperatorService(db).delete_operator(operator_id)
-    except ValueError as error:
+    except NotFoundError as error:
         raise _not_found(error) from error

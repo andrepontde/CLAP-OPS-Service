@@ -9,6 +9,7 @@ from sqlalchemy.exc import IntegrityError
 
 from clap_ops_service.api.v1.schemas.operator import OperatorCreate, OperatorUpdate
 from clap_ops_service.database.models import Operator
+from clap_ops_service.services.exceptions import ConflictError, NotFoundError
 from clap_ops_service.services.operator_service import OperatorService
 
 
@@ -39,7 +40,7 @@ def test_create_operator_reports_duplicate_employee_code(db_session: Mock) -> No
         "insert operator", {}, UniqueViolation("duplicate employee_code")
     )
 
-    with pytest.raises(ValueError, match="employee_code already exists"):
+    with pytest.raises(ConflictError, match="employee_code already exists"):
         OperatorService(db_session).create_operator(operator_create())
 
     db_session.rollback.assert_called_once_with()
@@ -65,7 +66,7 @@ def test_update_operator_changes_only_supplied_fields(db_session: Mock) -> None:
 def test_get_operator_raises_when_missing(db_session: Mock) -> None:
     db_session.query.return_value.filter.return_value.first.return_value = None
 
-    with pytest.raises(ValueError, match="Operator not found"):
+    with pytest.raises(NotFoundError, match="Operator not found"):
         OperatorService(db_session).get_operator(uuid4())
 
 

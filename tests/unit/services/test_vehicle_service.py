@@ -8,6 +8,7 @@ from sqlalchemy.exc import IntegrityError
 
 from clap_ops_service.api.v1.schemas.vehicle import VehicleCreate, VehicleUpdate
 from clap_ops_service.database.models import Vehicle
+from clap_ops_service.services.exceptions import ConflictError, NotFoundError
 from clap_ops_service.services.vehicle_service import VehicleService
 
 
@@ -39,7 +40,7 @@ def test_create_vehicle_reports_duplicate_name(db_session: Mock) -> None:
         "insert vehicle", {}, UniqueViolation("duplicate name")
     )
 
-    with pytest.raises(ValueError, match="name already exists"):
+    with pytest.raises(ConflictError, match="name or VIN already exists"):
         VehicleService(db_session).create_vehicle(vehicle_create())
 
     db_session.rollback.assert_called_once_with()
@@ -85,7 +86,7 @@ def test_update_vehicle_changes_vehicle_details(db_session: Mock) -> None:
 def test_get_vehicle_raises_when_missing(db_session: Mock) -> None:
     db_session.query.return_value.filter.return_value.first.return_value = None
 
-    with pytest.raises(ValueError, match="Vehicle not found"):
+    with pytest.raises(NotFoundError, match="Vehicle not found"):
         VehicleService(db_session).get_vehicle(uuid4())
 
 

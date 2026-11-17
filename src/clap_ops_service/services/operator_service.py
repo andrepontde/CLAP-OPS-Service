@@ -6,6 +6,7 @@ from sqlalchemy.orm import Session
 
 from clap_ops_service.api.v1.schemas.operator import OperatorCreate, OperatorUpdate
 from clap_ops_service.database.models import Operator
+from clap_ops_service.services.exceptions import ConflictError, NotFoundError
 
 
 class OperatorService:
@@ -20,7 +21,9 @@ class OperatorService:
         except IntegrityError as error:
             self.db.rollback()
             if isinstance(error.orig, UniqueViolation):
-                raise ValueError("An operator with this employee_code already exists") from error
+                raise ConflictError(
+                    "An operator with this employee_code already exists"
+                ) from error
             raise RuntimeError(
                 "Unexpected database integrity error while creating operator"
             ) from error
@@ -35,7 +38,7 @@ class OperatorService:
     def get_operator(self, operator_id: UUID) -> Operator:
         operator = self.db.query(Operator).filter(Operator.id == operator_id).first()
         if operator is None:
-            raise ValueError("Operator not found")
+            raise NotFoundError("Operator not found")
         return operator
 
     def list_operators(self) -> list[Operator]:
@@ -53,7 +56,9 @@ class OperatorService:
         except IntegrityError as error:
             self.db.rollback()
             if isinstance(error.orig, UniqueViolation):
-                raise ValueError("An operator with this employee_code already exists") from error
+                raise ConflictError(
+                    "An operator with this employee_code already exists"
+                ) from error
             raise RuntimeError(
                 "Unexpected database integrity error while updating operator"
             ) from error

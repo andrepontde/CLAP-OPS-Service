@@ -14,13 +14,15 @@ class OperatorBase(BaseModel):
     phone: str | None = Field(
         default=None,
         pattern=r"^\+?[1-9]\d{7,14}$",
-        max_length=16,
+        max_length=20,
     )
     date_of_birth: date | None = None
     address: str | None = Field(default=None, max_length=255)
     is_operator: bool = False
     employee_code: str | None = Field(default=None, max_length=6)
-    labor_rate: Decimal = Field(max_digits=10, decimal_places=2)
+    labor_rate: Decimal = Field(
+        max_digits=10, decimal_places=2, ge=0
+    )
     license_class: str | None = Field(default=None, max_length=50)
     license_expiration_date: date | None = None
     created_at: datetime | None = None
@@ -38,7 +40,6 @@ class OperatorCreate(OperatorBase):
 
 class OperatorResponse(OperatorBase):
     id: UUID
-    phone: str | None = None
 
 
 class OperatorList(BaseModel):
@@ -54,14 +55,14 @@ class OperatorUpdate(BaseModel):
     phone: str | None = Field(
         default=None,
         pattern=r"^\+?[1-9]\d{7,14}$",
-        max_length=16,
+        max_length=20,
     )
     date_of_birth: date | None = None
     address: str | None = Field(default=None, max_length=255)
     is_operator: bool | None = None
     employee_code: str | None = Field(default=None, max_length=6)
     labor_rate: Decimal | None = Field(
-        default=None, max_digits=10, decimal_places=2
+        default=None, max_digits=10, decimal_places=2, ge=0
     )
     license_class: str | None = Field(default=None, max_length=50)
     license_expiration_date: date | None = None

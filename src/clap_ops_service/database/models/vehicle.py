@@ -16,6 +16,14 @@ class Vehicle(Base):
             "status IN ('ACTIVE', 'IN_MAINTENANCE', 'DECOMMISSIONED')",
             name="ck_vehicles_status",
         ),
+        CheckConstraint(
+            "current_odometer >= 0",
+            name="ck_vehicles_current_odometer_non_negative",
+        ),
+        CheckConstraint(
+            "year BETWEEN 1886 AND 2100",
+            name="ck_vehicles_year_range",
+        ),
     )
 
     id: Mapped[UUID] = mapped_column(
@@ -34,7 +42,9 @@ class Vehicle(Base):
     )
     type: Mapped[str] = mapped_column(String(50), nullable=False)
     fuel_type: Mapped[str] = mapped_column(String(50), nullable=False)
-    vin_sn: Mapped[str] = mapped_column(String(100), nullable=False)
+    vin_sn: Mapped[str] = mapped_column(
+        String(100), unique=True, nullable=False, index=True
+    )
     license_plate: Mapped[str] = mapped_column(String(20), nullable=False)
     year: Mapped[int] = mapped_column(Integer, nullable=False)
     make: Mapped[str] = mapped_column(String(50), nullable=False)

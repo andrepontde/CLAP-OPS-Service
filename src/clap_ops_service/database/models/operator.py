@@ -3,7 +3,7 @@ from decimal import Decimal
 from typing import Optional
 from uuid import UUID
 
-from sqlalchemy import Boolean, Date, DateTime, Numeric, String, func
+from sqlalchemy import Boolean, CheckConstraint, Date, DateTime, Numeric, String, func
 from sqlalchemy.dialects.postgresql import UUID as PGUUID
 from sqlalchemy.orm import Mapped, mapped_column
 
@@ -12,6 +12,12 @@ from ..connection import Base
 
 class Operator(Base):
     __tablename__ = "operators"
+    __table_args__ = (
+        CheckConstraint(
+            "labor_rate >= 0",
+            name="ck_operators_labor_rate_non_negative",
+        ),
+    )
 
     id: Mapped[UUID] = mapped_column(
         PGUUID(as_uuid=True),

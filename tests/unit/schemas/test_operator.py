@@ -82,7 +82,7 @@ def test_operator_response_reads_attributes_from_a_model() -> None:
             name="Octavio",
             last_name="Gomez",
             email=None,
-            phone="555-010-1234",
+            phone="+15550101234",
             date_of_birth=date(1990, 1, 1),
             address=None,
             is_operator=True,

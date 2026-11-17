@@ -6,6 +6,7 @@ from sqlalchemy.orm import Session
 
 from clap_ops_service.api.v1.schemas.vehicle import VehicleCreate, VehicleUpdate
 from clap_ops_service.database.models import Vehicle
+from clap_ops_service.services.exceptions import ConflictError, NotFoundError
 
 
 class VehicleService:
@@ -20,7 +21,9 @@ class VehicleService:
         except IntegrityError as error:
             self.db.rollback()
             if isinstance(error.orig, UniqueViolation):
-                raise ValueError("A vehicle with this name already exists") from error
+                raise ConflictError(
+                    "A vehicle with this name or VIN already exists"
+                ) from error
             raise RuntimeError("Unexpected database integrity error while creating vehicle") from error
         except (SQLAlchemyError, OSError) as error:
             self.db.rollback()
@@ -31,7 +34,7 @@ class VehicleService:
     def get_vehicle(self, vehicle_id: UUID) -> Vehicle:
         vehicle = self.db.query(Vehicle).filter(Vehicle.id == vehicle_id).first()
         if vehicle is None:
-            raise ValueError("Vehicle not found")
+            raise NotFoundError("Vehicle not found")
         return vehicle
 
     def list_vehicles(self) -> list[Vehicle]:
@@ -47,7 +50,9 @@ class VehicleService:
         except IntegrityError as error:
             self.db.rollback()
             if isinstance(error.orig, UniqueViolation):
-                raise ValueError("A vehicle with this name already exists") from error
+                raise ConflictError(
+                    "A vehicle with this name or VIN already exists"
+                ) from error
             raise RuntimeError("Unexpected database integrity error while updating vehicle") from error
         except (SQLAlchemyError, OSError) as error:
             self.db.rollback()

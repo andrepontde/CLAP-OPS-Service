@@ -12,12 +12,13 @@ from clap_ops_service.api.v1.schemas.vehicle import (
 )
 from clap_ops_service.database import get_db
 from clap_ops_service.database.models import Admin
+from clap_ops_service.services.exceptions import ConflictError, NotFoundError
 from clap_ops_service.services.vehicle_service import VehicleService
 
 vehicle_router = APIRouter(prefix="/vehicles", tags=["vehicles"])
 
 
-def _not_found(error: ValueError) -> HTTPException:
+def _not_found(error: NotFoundError) -> HTTPException:
     return HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(error))
 
 
@@ -29,7 +30,7 @@ def create_vehicle(
 ) -> VehicleResponse:
     try:
         return VehicleService(db).create_vehicle(vehicle)
-    except ValueError as error:
+    except ConflictError as error:
         raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=str(error)) from error
 
 
@@ -49,7 +50,7 @@ def get_vehicle(
 ) -> VehicleResponse:
     try:
         return VehicleService(db).get_vehicle(vehicle_id)
-    except ValueError as error:
+    except NotFoundError as error:
         raise _not_found(error) from error
 
 
@@ -62,9 +63,9 @@ def update_vehicle(
 ) -> VehicleResponse:
     try:
         return VehicleService(db).update_vehicle(vehicle_id, vehicle)
-    except ValueError as error:
-        if "not found" in str(error):
-            raise _not_found(error) from error
+    except NotFoundError as error:
+        raise _not_found(error) from error
+    except ConflictError as error:
         raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=str(error)) from error
 
 
@@ -76,5 +77,5 @@ def delete_vehicle(
 ) -> None:
     try:
         VehicleService(db).delete_vehicle(vehicle_id)
-    except ValueError as error:
+    except NotFoundError as error:
         raise _not_found(error) from error

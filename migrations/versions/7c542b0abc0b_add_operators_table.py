@@ -33,6 +33,7 @@ def upgrade() -> None:
     sa.Column('license_class', sa.String(length=50), nullable=True),
     sa.Column('license_expiration_date', sa.Date(), nullable=True),
     sa.Column('created_at', sa.DateTime(timezone=True), server_default=sa.text('clock_timestamp()'), nullable=False),
+    sa.CheckConstraint('labor_rate >= 0', name='ck_operators_labor_rate_non_negative'),
     sa.PrimaryKeyConstraint('id')
     )
     op.create_index(op.f('ix_operators_employee_code'), 'operators', ['employee_code'], unique=True)
