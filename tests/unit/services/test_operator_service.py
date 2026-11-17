@@ -54,11 +54,10 @@ def test_update_operator_changes_only_supplied_fields(db_session: Mock) -> None:
     db_session.query.return_value.filter.return_value.first.return_value = operator
 
     result = OperatorService(db_session).update_operator(
-        operator_id, OperatorUpdate(is_employee=True)
+        operator_id, OperatorUpdate(name="Updated name")
     )
 
-    assert result.is_employee is True
-    assert result.name == "Octavio"
+    assert result.name == "Updated name"
     db_session.commit.assert_called_once_with()
     db_session.refresh.assert_called_once_with(operator)
 

@@ -18,7 +18,6 @@ class OperatorBase(BaseModel):
     )
     date_of_birth: date | None = None
     address: str | None = Field(default=None, max_length=255)
-    is_employee: bool = False
     is_operator: bool = False
     employee_code: str | None = Field(default=None, max_length=6)
     labor_rate: Decimal = Field(max_digits=10, decimal_places=2)
@@ -59,7 +58,6 @@ class OperatorUpdate(BaseModel):
     )
     date_of_birth: date | None = None
     address: str | None = Field(default=None, max_length=255)
-    is_employee: bool | None = None
     is_operator: bool | None = None
     employee_code: str | None = Field(default=None, max_length=6)
     labor_rate: Decimal | None = Field(

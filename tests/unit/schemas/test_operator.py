@@ -13,14 +13,13 @@ from clap_ops_service.api.v1.schemas.operator import (
 )
 
 
-def test_operator_create_uses_boolean_defaults() -> None:
+def test_operator_create_uses_operator_default() -> None:
     operator = OperatorCreate(
         name="Octavio",
         last_name="Gomez",
         labor_rate=Decimal("650.00"),
     )
 
-    assert operator.is_employee is False
     assert operator.is_operator is False
     assert operator.email is None
 
@@ -69,9 +68,9 @@ def test_operator_requires_license_expiration_when_operator() -> None:
 
 
 def test_operator_update_is_partial() -> None:
-    update = OperatorUpdate(is_employee=True)
+    update = OperatorUpdate(name="Updated name")
 
-    assert update.model_dump(exclude_unset=True) == {"is_employee": True}
+    assert update.model_dump(exclude_unset=True) == {"name": "Updated name"}
 
 
 def test_operator_response_reads_attributes_from_a_model() -> None:
@@ -86,7 +85,6 @@ def test_operator_response_reads_attributes_from_a_model() -> None:
             phone="555-010-1234",
             date_of_birth=date(1990, 1, 1),
             address=None,
-            is_employee=True,
             is_operator=True,
             employee_code="EMP001",
             labor_rate=Decimal("650.00"),

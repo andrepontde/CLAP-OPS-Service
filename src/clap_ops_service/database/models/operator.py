@@ -24,9 +24,6 @@ class Operator(Base):
     phone: Mapped[Optional[str]] = mapped_column(String(20))
     date_of_birth: Mapped[Optional[date]] = mapped_column(Date)
     address: Mapped[Optional[str]] = mapped_column(String(255))
-    is_employee: Mapped[bool] = mapped_column(
-        Boolean, nullable=False, default=False, server_default="false"
-    )
     is_operator: Mapped[bool] = mapped_column(
         Boolean, nullable=False, default=False, server_default="false"
     )
