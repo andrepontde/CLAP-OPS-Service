@@ -13,20 +13,37 @@ from clap_ops_service.api.v1.schemas.vehicle import (
 
 
 def test_vehicle_create_uses_database_defaults() -> None:
-    vehicle = VehicleCreate(internal_id="M1", make="Ford", model="Transit", year=2024)
+    vehicle = VehicleCreate(
+        name="Truck 1",
+        type="Truck",
+        fuel_type="Diesel",
+        vin_sn="VIN123",
+        license_plate="ABC123",
+        year=2024,
+        make="Ford",
+        model="Transit",
+    )
 
     assert vehicle.status == "ACTIVE"
     assert vehicle.current_odometer == 0
+    assert vehicle.insurance_policy_number is None
+    assert vehicle.insurance_expiration is None
+    assert vehicle.circulation_card_number is None
+    assert vehicle.verification_expiration is None
     assert vehicle.created_at is None
 
 
 def test_vehicle_create_rejects_unknown_status() -> None:
     with pytest.raises(ValidationError):
         VehicleCreate(
-            internal_id="M1",
+            name="Truck 1",
+            type="Truck",
+            fuel_type="Diesel",
+            vin_sn="VIN123",
+            license_plate="ABC123",
+            year=2024,
             make="Ford",
             model="Transit",
-            year=2024,
             status="RETIRED",
         )
 
@@ -43,16 +60,20 @@ def test_vehicle_response_reads_attributes_from_a_model() -> None:
     response = VehicleResponse.model_validate(
         SimpleNamespace(
             id=vehicle_id,
-            internal_id="M1",
+            name="Truck 1",
+            type="Truck",
+            fuel_type="Diesel",
+            vin_sn="VIN123",
+            license_plate="ABC123",
+            year=2024,
             make="Ford",
             model="Transit",
-            year=2024,
             status="ACTIVE",
-            current_odometer=0,
-            insurance_policy_number=None,
-            insurance_expiration=None,
-            circulation_card_number=None,
-            verification_expiration=None,
+            current_odometer=120,
+            insurance_policy_number="POL-123",
+            insurance_expiration=created_at.date(),
+            circulation_card_number="CARD-123",
+            verification_expiration=created_at.date(),
             created_at=created_at,
         )
     )

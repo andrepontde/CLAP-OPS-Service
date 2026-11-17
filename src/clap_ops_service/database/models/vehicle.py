@@ -1,6 +1,6 @@
 from datetime import date, datetime
 from typing import Optional
-from uuid import UUID, uuid4
+from uuid import UUID
 
 from sqlalchemy import CheckConstraint, Date, DateTime, Integer, String, func
 from sqlalchemy.dialects.postgresql import UUID as PGUUID
@@ -23,18 +23,22 @@ class Vehicle(Base):
         primary_key=True,
         server_default=func.gen_random_uuid(),
     )
-    internal_id: Mapped[str] = mapped_column(
-        String(20), unique=True, nullable=False, index=True
+    name: Mapped[str] = mapped_column(
+        String(100), unique=True, nullable=False, index=True
     )
-    make: Mapped[str] = mapped_column(String(50), nullable=False)
-    model: Mapped[str] = mapped_column(String(50), nullable=False)
-    year: Mapped[int] = mapped_column(Integer, nullable=False)
     status: Mapped[str] = mapped_column(
         String(25),
         nullable=False,
         default="ACTIVE",
         server_default="ACTIVE",
     )
+    type: Mapped[str] = mapped_column(String(50), nullable=False)
+    fuel_type: Mapped[str] = mapped_column(String(50), nullable=False)
+    vin_sn: Mapped[str] = mapped_column(String(100), nullable=False)
+    license_plate: Mapped[str] = mapped_column(String(20), nullable=False)
+    year: Mapped[int] = mapped_column(Integer, nullable=False)
+    make: Mapped[str] = mapped_column(String(50), nullable=False)
+    model: Mapped[str] = mapped_column(String(50), nullable=False)
     current_odometer: Mapped[int] = mapped_column(
         Integer, nullable=False, default=0, server_default="0"
     )

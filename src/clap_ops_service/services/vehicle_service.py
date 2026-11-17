@@ -20,7 +20,7 @@ class VehicleService:
         except IntegrityError as error:
             self.db.rollback()
             if isinstance(error.orig, UniqueViolation):
-                raise ValueError("A vehicle with this internal_id already exists") from error
+                raise ValueError("A vehicle with this name already exists") from error
             raise RuntimeError("Unexpected database integrity error while creating vehicle") from error
         except (SQLAlchemyError, OSError) as error:
             self.db.rollback()
@@ -35,7 +35,7 @@ class VehicleService:
         return vehicle
 
     def list_vehicles(self) -> list[Vehicle]:
-        return self.db.query(Vehicle).order_by(Vehicle.internal_id).all()
+        return self.db.query(Vehicle).order_by(Vehicle.name).all()
 
     def update_vehicle(self, vehicle_id: UUID, vehicle_data: VehicleUpdate) -> Vehicle:
         vehicle = self.get_vehicle(vehicle_id)
@@ -47,7 +47,7 @@ class VehicleService:
         except IntegrityError as error:
             self.db.rollback()
             if isinstance(error.orig, UniqueViolation):
-                raise ValueError("A vehicle with this internal_id already exists") from error
+                raise ValueError("A vehicle with this name already exists") from error
             raise RuntimeError("Unexpected database integrity error while updating vehicle") from error
         except (SQLAlchemyError, OSError) as error:
             self.db.rollback()

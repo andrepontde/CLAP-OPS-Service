@@ -7,13 +7,17 @@ from pydantic import BaseModel, ConfigDict, Field
 class VehicleBase(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
-    internal_id: str
-    make: str
-    model: str
-    year: int
+    name: str
     status: str = Field(
         default="ACTIVE", pattern="^(ACTIVE|IN_MAINTENANCE|DECOMMISSIONED)$"
     )
+    type: str
+    fuel_type: str
+    vin_sn: str
+    license_plate: str
+    year: int
+    make: str
+    model: str
     current_odometer: int = 0
     insurance_policy_number: str | None = None
     insurance_expiration: date | None = None
@@ -37,13 +41,17 @@ class VehicleList(BaseModel):
 class VehicleUpdate(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
-    internal_id: str | None = None
-    make: str | None = None
-    model: str | None = None
-    year: int | None = None
+    name: str | None = None
     status: str | None = Field(
         default=None, pattern="^(ACTIVE|IN_MAINTENANCE|DECOMMISSIONED)$"
     )
+    type: str | None = None
+    fuel_type: str | None = None
+    vin_sn: str | None = None
+    license_plate: str | None = None
+    year: int | None = None
+    make: str | None = None
+    model: str | None = None
     current_odometer: int | None = None
     insurance_policy_number: str | None = None
     insurance_expiration: date | None = None
@@ -52,7 +60,7 @@ class VehicleUpdate(BaseModel):
 
 
 class VehicleDelete(BaseModel):
-    internal_id: str
+    name: str
 
 
 class VehicleStatusUpdate(BaseModel):
