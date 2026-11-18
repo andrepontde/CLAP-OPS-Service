@@ -37,7 +37,8 @@ def create_admin_account(
     db.add(admin)
     try:
         db.flush()
-        for fleet_id in fleet_ids:
+        unique_fleet_ids = list(dict.fromkeys(fleet_ids))
+        for fleet_id in unique_fleet_ids:
             db.add(
                 FleetMembership(
                     admin_id=admin.id,
