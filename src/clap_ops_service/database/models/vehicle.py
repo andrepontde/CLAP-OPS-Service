@@ -2,7 +2,16 @@ from datetime import date, datetime
 from typing import Optional
 from uuid import UUID
 
-from sqlalchemy import CheckConstraint, Date, DateTime, Integer, String, func
+from sqlalchemy import (
+    CheckConstraint,
+    Date,
+    DateTime,
+    ForeignKey,
+    Integer,
+    String,
+    UniqueConstraint,
+    func,
+)
 from sqlalchemy.dialects.postgresql import UUID as PGUUID
 from sqlalchemy.orm import Mapped, mapped_column
 
@@ -12,6 +21,8 @@ from ..connection import Base
 class Vehicle(Base):
     __tablename__ = "vehicles"
     __table_args__ = (
+        UniqueConstraint("fleet_id", "name", name="uq_vehicles_fleet_name"),
+        UniqueConstraint("fleet_id", "vin_sn", name="uq_vehicles_fleet_vin"),
         CheckConstraint(
             "status IN ('ACTIVE', 'IN_MAINTENANCE', 'DECOMMISSIONED')",
             name="ck_vehicles_status",
@@ -31,8 +42,14 @@ class Vehicle(Base):
         primary_key=True,
         server_default=func.gen_random_uuid(),
     )
+    fleet_id: Mapped[UUID] = mapped_column(
+        PGUUID(as_uuid=True),
+        ForeignKey("fleets.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
     name: Mapped[str] = mapped_column(
-        String(100), unique=True, nullable=False, index=True
+        String(100), nullable=False
     )
     status: Mapped[str] = mapped_column(
         String(25),
@@ -43,7 +60,7 @@ class Vehicle(Base):
     type: Mapped[str] = mapped_column(String(50), nullable=False)
     fuel_type: Mapped[str] = mapped_column(String(50), nullable=False)
     vin_sn: Mapped[str] = mapped_column(
-        String(100), unique=True, nullable=False, index=True
+        String(100), nullable=False
     )
     license_plate: Mapped[str] = mapped_column(String(20), nullable=False)
     year: Mapped[int] = mapped_column(Integer, nullable=False)

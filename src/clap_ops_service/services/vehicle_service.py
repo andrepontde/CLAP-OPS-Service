@@ -14,8 +14,15 @@ class VehicleService:
     def __init__(self, db: Session):
         self.db = db
 
-    def create_vehicle(self, vehicle_data: VehicleCreate) -> Vehicle:
-        vehicle = Vehicle(**vehicle_data.model_dump())
+    def create_vehicle(
+        self,
+        fleet_id: UUID,
+        vehicle_data: VehicleCreate,
+    ) -> Vehicle:
+        vehicle = Vehicle(
+            fleet_id=fleet_id,
+            **vehicle_data.model_dump(),
+        )
         self.db.add(vehicle)
         with database_operation(
             self.db,
@@ -26,17 +33,34 @@ class VehicleService:
             self.db.refresh(vehicle)
         return vehicle
 
-    def get_vehicle(self, vehicle_id: UUID) -> Vehicle:
-        vehicle = self.db.query(Vehicle).filter(Vehicle.id == vehicle_id).first()
+    def get_vehicle(self, fleet_id: UUID, vehicle_id: UUID) -> Vehicle:
+        vehicle = (
+            self.db.query(Vehicle)
+            .filter(
+                Vehicle.fleet_id == fleet_id,
+                Vehicle.id == vehicle_id,
+            )
+            .first()
+        )
         if vehicle is None:
             raise NotFoundError("Vehicle not found")
         return vehicle
 
-    def list_vehicles(self) -> list[Vehicle]:
-        return self.db.query(Vehicle).order_by(Vehicle.name).all()
+    def list_vehicles(self, fleet_id: UUID) -> list[Vehicle]:
+        return (
+            self.db.query(Vehicle)
+            .filter(Vehicle.fleet_id == fleet_id)
+            .order_by(Vehicle.name)
+            .all()
+        )
 
-    def update_vehicle(self, vehicle_id: UUID, vehicle_data: VehicleUpdate) -> Vehicle:
-        vehicle = self.get_vehicle(vehicle_id)
+    def update_vehicle(
+        self,
+        fleet_id: UUID,
+        vehicle_id: UUID,
+        vehicle_data: VehicleUpdate,
+    ) -> Vehicle:
+        vehicle = self.get_vehicle(fleet_id, vehicle_id)
         for field, value in vehicle_data.model_dump(exclude_unset=True).items():
             setattr(vehicle, field, value)
         VehicleCreate.model_validate(vehicle)
@@ -49,8 +73,8 @@ class VehicleService:
             self.db.refresh(vehicle)
         return vehicle
 
-    def delete_vehicle(self, vehicle_id: UUID) -> None:
-        vehicle = self.get_vehicle(vehicle_id)
+    def delete_vehicle(self, fleet_id: UUID, vehicle_id: UUID) -> None:
+        vehicle = self.get_vehicle(fleet_id, vehicle_id)
         self.db.delete(vehicle)
         with database_operation(self.db, "delete vehicle"):
             self.db.commit()

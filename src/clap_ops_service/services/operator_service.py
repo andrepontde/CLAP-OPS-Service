@@ -14,8 +14,15 @@ class OperatorService:
     def __init__(self, db: Session):
         self.db = db
 
-    def create_operator(self, operator_data: OperatorCreate) -> Operator:
-        operator = Operator(**operator_data.model_dump())
+    def create_operator(
+        self,
+        fleet_id: UUID,
+        operator_data: OperatorCreate,
+    ) -> Operator:
+        operator = Operator(
+            fleet_id=fleet_id,
+            **operator_data.model_dump(),
+        )
         self.db.add(operator)
         with database_operation(
             self.db,
@@ -26,19 +33,34 @@ class OperatorService:
             self.db.refresh(operator)
         return operator
 
-    def get_operator(self, operator_id: UUID) -> Operator:
-        operator = self.db.query(Operator).filter(Operator.id == operator_id).first()
+    def get_operator(self, fleet_id: UUID, operator_id: UUID) -> Operator:
+        operator = (
+            self.db.query(Operator)
+            .filter(
+                Operator.fleet_id == fleet_id,
+                Operator.id == operator_id,
+            )
+            .first()
+        )
         if operator is None:
             raise NotFoundError("Operator not found")
         return operator
 
-    def list_operators(self) -> list[Operator]:
-        return self.db.query(Operator).order_by(Operator.name).all()
+    def list_operators(self, fleet_id: UUID) -> list[Operator]:
+        return (
+            self.db.query(Operator)
+            .filter(Operator.fleet_id == fleet_id)
+            .order_by(Operator.name)
+            .all()
+        )
 
     def update_operator(
-        self, operator_id: UUID, operator_data: OperatorUpdate
+        self,
+        fleet_id: UUID,
+        operator_id: UUID,
+        operator_data: OperatorUpdate,
     ) -> Operator:
-        operator = self.get_operator(operator_id)
+        operator = self.get_operator(fleet_id, operator_id)
         for field, value in operator_data.model_dump(exclude_unset=True).items():
             setattr(operator, field, value)
         OperatorCreate.model_validate(operator)
@@ -51,8 +73,8 @@ class OperatorService:
             self.db.refresh(operator)
         return operator
 
-    def delete_operator(self, operator_id: UUID) -> None:
-        operator = self.get_operator(operator_id)
+    def delete_operator(self, fleet_id: UUID, operator_id: UUID) -> None:
+        operator = self.get_operator(fleet_id, operator_id)
         self.db.delete(operator)
         with database_operation(self.db, "delete operator"):
             self.db.commit()

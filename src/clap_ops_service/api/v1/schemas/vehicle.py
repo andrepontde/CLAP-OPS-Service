@@ -31,6 +31,7 @@ class VehicleCreate(VehicleBase):
 
 class VehicleResponse(VehicleBase):
     id: uuid.UUID
+    fleet_id: uuid.UUID
     created_at: datetime
 
 

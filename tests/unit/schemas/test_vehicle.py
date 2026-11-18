@@ -61,10 +61,12 @@ def test_vehicle_update_rejects_null_required_fields(field: str) -> None:
 
 def test_vehicle_response_reads_attributes_from_a_model() -> None:
     vehicle_id = uuid4()
+    fleet_id = uuid4()
     created_at = datetime.now(timezone.utc)
     response = VehicleResponse.model_validate(
         SimpleNamespace(
             id=vehicle_id,
+            fleet_id=fleet_id,
             name="Truck 1",
             type="Truck",
             fuel_type="Diesel",
@@ -84,4 +86,5 @@ def test_vehicle_response_reads_attributes_from_a_model() -> None:
     )
 
     assert response.id == vehicle_id
+    assert response.fleet_id == fleet_id
     assert response.created_at == created_at
