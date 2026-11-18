@@ -1,9 +1,9 @@
-from datetime import datetime
+from datetime import date, datetime
 from decimal import Decimal
 from typing import Optional
 from uuid import UUID
 
-from sqlalchemy import Boolean, DateTime, Numeric, String, func
+from sqlalchemy import CheckConstraint, Date, DateTime, Numeric, String, func
 from sqlalchemy.dialects.postgresql import UUID as PGUUID
 from sqlalchemy.orm import Mapped, mapped_column
 
@@ -12,21 +12,32 @@ from ..connection import Base
 
 class Operator(Base):
     __tablename__ = "operators"
+    __table_args__ = (
+        CheckConstraint(
+            "labor_rate >= 0",
+            name="ck_operators_labor_rate_non_negative",
+        ),
+    )
 
     id: Mapped[UUID] = mapped_column(
         PGUUID(as_uuid=True),
         primary_key=True,
         server_default=func.gen_random_uuid(),
     )
-    full_name: Mapped[str] = mapped_column(String(100), nullable=False)
-    phone_number: Mapped[Optional[str]] = mapped_column(String(20))
+    name: Mapped[str] = mapped_column(String(100), nullable=False)
+    last_name: Mapped[str] = mapped_column(String(100), nullable=False)
     email: Mapped[Optional[str]] = mapped_column(String(320))
-    base_rate_per_trip: Mapped[Decimal] = mapped_column(
+    phone: Mapped[Optional[str]] = mapped_column(String(20))
+    date_of_birth: Mapped[Optional[date]] = mapped_column(Date)
+    address: Mapped[Optional[str]] = mapped_column(String(255))
+    employee_code: Mapped[Optional[str]] = mapped_column(
+        String(6), unique=True, nullable=True, index=True
+    )
+    labor_rate: Mapped[Decimal] = mapped_column(
         Numeric(10, 2), nullable=False
     )
-    is_active: Mapped[bool] = mapped_column(
-        Boolean, nullable=False, default=True, server_default="true"
-    )
+    license_class: Mapped[Optional[str]] = mapped_column(String(50))
+    license_expiration_date: Mapped[date] = mapped_column(Date, nullable=False)
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.clock_timestamp()
     )

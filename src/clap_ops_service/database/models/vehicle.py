@@ -1,6 +1,6 @@
 from datetime import date, datetime
 from typing import Optional
-from uuid import UUID, uuid4
+from uuid import UUID
 
 from sqlalchemy import CheckConstraint, Date, DateTime, Integer, String, func
 from sqlalchemy.dialects.postgresql import UUID as PGUUID
@@ -16,6 +16,14 @@ class Vehicle(Base):
             "status IN ('ACTIVE', 'IN_MAINTENANCE', 'DECOMMISSIONED')",
             name="ck_vehicles_status",
         ),
+        CheckConstraint(
+            "current_odometer >= 0",
+            name="ck_vehicles_current_odometer_non_negative",
+        ),
+        CheckConstraint(
+            "year BETWEEN 1886 AND 2100",
+            name="ck_vehicles_year_range",
+        ),
     )
 
     id: Mapped[UUID] = mapped_column(
@@ -23,18 +31,24 @@ class Vehicle(Base):
         primary_key=True,
         server_default=func.gen_random_uuid(),
     )
-    internal_id: Mapped[str] = mapped_column(
-        String(20), unique=True, nullable=False, index=True
+    name: Mapped[str] = mapped_column(
+        String(100), unique=True, nullable=False, index=True
     )
-    make: Mapped[str] = mapped_column(String(50), nullable=False)
-    model: Mapped[str] = mapped_column(String(50), nullable=False)
-    year: Mapped[int] = mapped_column(Integer, nullable=False)
     status: Mapped[str] = mapped_column(
         String(25),
         nullable=False,
         default="ACTIVE",
         server_default="ACTIVE",
     )
+    type: Mapped[str] = mapped_column(String(50), nullable=False)
+    fuel_type: Mapped[str] = mapped_column(String(50), nullable=False)
+    vin_sn: Mapped[str] = mapped_column(
+        String(100), unique=True, nullable=False, index=True
+    )
+    license_plate: Mapped[str] = mapped_column(String(20), nullable=False)
+    year: Mapped[int] = mapped_column(Integer, nullable=False)
+    make: Mapped[str] = mapped_column(String(50), nullable=False)
+    model: Mapped[str] = mapped_column(String(50), nullable=False)
     current_odometer: Mapped[int] = mapped_column(
         Integer, nullable=False, default=0, server_default="0"
     )

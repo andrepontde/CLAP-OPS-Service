@@ -1,10 +1,13 @@
 from uuid import UUID
 
-from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import Session
 
 from clap_ops_service.api.v1.schemas.operator import OperatorCreate, OperatorUpdate
 from clap_ops_service.database.models import Operator
+from clap_ops_service.services.database_helpers import database_operation
+from clap_ops_service.services.exceptions import (
+    NotFoundError,
+)
 
 
 class OperatorService:
@@ -12,28 +15,25 @@ class OperatorService:
         self.db = db
 
     def create_operator(self, operator_data: OperatorCreate) -> Operator:
-        operator = Operator(
-            **operator_data.model_dump(exclude={"created_at"})
-        )
+        operator = Operator(**operator_data.model_dump())
         self.db.add(operator)
-        try:
+        with database_operation(
+            self.db,
+            "create operator",
+            "An operator with this employee_code already exists",
+        ):
             self.db.commit()
-        except (SQLAlchemyError, OSError) as error:
-            self.db.rollback()
-            raise RuntimeError(
-                "Unexpected error occurred while creating operator"
-            ) from error
-        self.db.refresh(operator)
+            self.db.refresh(operator)
         return operator
 
     def get_operator(self, operator_id: UUID) -> Operator:
         operator = self.db.query(Operator).filter(Operator.id == operator_id).first()
         if operator is None:
-            raise ValueError("Operator not found")
+            raise NotFoundError("Operator not found")
         return operator
 
     def list_operators(self) -> list[Operator]:
-        return self.db.query(Operator).order_by(Operator.full_name).all()
+        return self.db.query(Operator).order_by(Operator.name).all()
 
     def update_operator(
         self, operator_id: UUID, operator_data: OperatorUpdate
@@ -41,23 +41,18 @@ class OperatorService:
         operator = self.get_operator(operator_id)
         for field, value in operator_data.model_dump(exclude_unset=True).items():
             setattr(operator, field, value)
-        try:
+        OperatorCreate.model_validate(operator)
+        with database_operation(
+            self.db,
+            "update operator",
+            "An operator with this employee_code already exists",
+        ):
             self.db.commit()
             self.db.refresh(operator)
-        except (SQLAlchemyError, OSError) as error:
-            self.db.rollback()
-            raise RuntimeError(
-                "Unexpected error occurred while updating operator"
-            ) from error
         return operator
 
     def delete_operator(self, operator_id: UUID) -> None:
         operator = self.get_operator(operator_id)
         self.db.delete(operator)
-        try:
+        with database_operation(self.db, "delete operator"):
             self.db.commit()
-        except (SQLAlchemyError, OSError) as error:
-            self.db.rollback()
-            raise RuntimeError(
-                "Unexpected error occurred while deleting operator"
-            ) from error
