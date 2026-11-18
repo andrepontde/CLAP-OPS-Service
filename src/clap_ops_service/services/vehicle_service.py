@@ -6,7 +6,11 @@ from sqlalchemy.orm import Session
 
 from clap_ops_service.api.v1.schemas.vehicle import VehicleCreate, VehicleUpdate
 from clap_ops_service.database.models import Vehicle
-from clap_ops_service.services.exceptions import ConflictError, NotFoundError
+from clap_ops_service.services.exceptions import (
+    ConflictError,
+    DatabaseOperationError,
+    NotFoundError,
+)
 
 
 class VehicleService:
@@ -24,15 +28,20 @@ class VehicleService:
                 raise ConflictError(
                     "A vehicle with this name or VIN already exists"
                 ) from error
-            raise RuntimeError(
-                "Unexpected database integrity error while creating vehicle"
+            raise DatabaseOperationError(
+                "Could not create vehicle"
             ) from error
         except (SQLAlchemyError, OSError) as error:
             self.db.rollback()
-            raise RuntimeError(
-                "Unexpected error occurred while creating vehicle"
+            raise DatabaseOperationError(
+                "Could not create vehicle"
             ) from error
-        self.db.refresh(vehicle)
+        try:
+            self.db.refresh(vehicle)
+        except (SQLAlchemyError, OSError) as error:
+            raise DatabaseOperationError(
+                "Could not create vehicle"
+            ) from error
         return vehicle
 
     def get_vehicle(self, vehicle_id: UUID) -> Vehicle:
@@ -57,13 +66,13 @@ class VehicleService:
                 raise ConflictError(
                     "A vehicle with this name or VIN already exists"
                 ) from error
-            raise RuntimeError(
-                "Unexpected database integrity error while updating vehicle"
+            raise DatabaseOperationError(
+                "Could not update vehicle"
             ) from error
         except (SQLAlchemyError, OSError) as error:
             self.db.rollback()
-            raise RuntimeError(
-                "Unexpected error occurred while updating vehicle"
+            raise DatabaseOperationError(
+                "Could not update vehicle"
             ) from error
         return vehicle
 
@@ -74,6 +83,6 @@ class VehicleService:
             self.db.commit()
         except (SQLAlchemyError, OSError) as error:
             self.db.rollback()
-            raise RuntimeError(
-                "Unexpected error occurred while deleting vehicle"
+            raise DatabaseOperationError(
+                "Could not delete vehicle"
             ) from error

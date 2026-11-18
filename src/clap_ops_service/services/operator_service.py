@@ -6,7 +6,11 @@ from sqlalchemy.orm import Session
 
 from clap_ops_service.api.v1.schemas.operator import OperatorCreate, OperatorUpdate
 from clap_ops_service.database.models import Operator
-from clap_ops_service.services.exceptions import ConflictError, NotFoundError
+from clap_ops_service.services.exceptions import (
+    ConflictError,
+    DatabaseOperationError,
+    NotFoundError,
+)
 
 
 class OperatorService:
@@ -24,15 +28,20 @@ class OperatorService:
                 raise ConflictError(
                     "An operator with this employee_code already exists"
                 ) from error
-            raise RuntimeError(
-                "Unexpected database integrity error while creating operator"
+            raise DatabaseOperationError(
+                "Could not create operator"
             ) from error
         except (SQLAlchemyError, OSError) as error:
             self.db.rollback()
-            raise RuntimeError(
-                "Unexpected error occurred while creating operator"
+            raise DatabaseOperationError(
+                "Could not create operator"
             ) from error
-        self.db.refresh(operator)
+        try:
+            self.db.refresh(operator)
+        except (SQLAlchemyError, OSError) as error:
+            raise DatabaseOperationError(
+                "Could not create operator"
+            ) from error
         return operator
 
     def get_operator(self, operator_id: UUID) -> Operator:
@@ -59,13 +68,13 @@ class OperatorService:
                 raise ConflictError(
                     "An operator with this employee_code already exists"
                 ) from error
-            raise RuntimeError(
-                "Unexpected database integrity error while updating operator"
+            raise DatabaseOperationError(
+                "Could not update operator"
             ) from error
         except (SQLAlchemyError, OSError) as error:
             self.db.rollback()
-            raise RuntimeError(
-                "Unexpected error occurred while updating operator"
+            raise DatabaseOperationError(
+                "Could not update operator"
             ) from error
         return operator
 
@@ -76,6 +85,6 @@ class OperatorService:
             self.db.commit()
         except (SQLAlchemyError, OSError) as error:
             self.db.rollback()
-            raise RuntimeError(
-                "Unexpected error occurred while deleting operator"
+            raise DatabaseOperationError(
+                "Could not delete operator"
             ) from error

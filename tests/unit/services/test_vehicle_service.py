@@ -4,11 +4,15 @@ from uuid import uuid4
 
 import pytest
 from psycopg.errors import UniqueViolation
-from sqlalchemy.exc import IntegrityError
+from sqlalchemy.exc import IntegrityError, SQLAlchemyError
 
 from clap_ops_service.api.v1.schemas.vehicle import VehicleCreate, VehicleUpdate
 from clap_ops_service.database.models import Vehicle
-from clap_ops_service.services.exceptions import ConflictError, NotFoundError
+from clap_ops_service.services.exceptions import (
+    ConflictError,
+    DatabaseOperationError,
+    NotFoundError,
+)
 from clap_ops_service.services.vehicle_service import VehicleService
 
 
@@ -41,6 +45,15 @@ def test_create_vehicle_reports_duplicate_name(db_session: Mock) -> None:
     )
 
     with pytest.raises(ConflictError, match="name or VIN already exists"):
+        VehicleService(db_session).create_vehicle(vehicle_create())
+
+    db_session.rollback.assert_called_once_with()
+
+
+def test_create_vehicle_reports_unexpected_database_error(db_session: Mock) -> None:
+    db_session.commit.side_effect = SQLAlchemyError("database unavailable")
+
+    with pytest.raises(DatabaseOperationError, match="Could not create vehicle"):
         VehicleService(db_session).create_vehicle(vehicle_create())
 
     db_session.rollback.assert_called_once_with()

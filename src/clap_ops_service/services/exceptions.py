@@ -4,3 +4,7 @@ class NotFoundError(Exception):
 
 class ConflictError(Exception):
     """Raised when an operation conflicts with existing data."""
+
+
+class DatabaseOperationError(Exception):
+    """Raised when a database operation cannot be completed."""

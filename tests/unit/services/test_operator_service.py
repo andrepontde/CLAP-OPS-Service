@@ -5,11 +5,15 @@ from uuid import uuid4
 
 import pytest
 from psycopg.errors import UniqueViolation
-from sqlalchemy.exc import IntegrityError
+from sqlalchemy.exc import IntegrityError, SQLAlchemyError
 
 from clap_ops_service.api.v1.schemas.operator import OperatorCreate, OperatorUpdate
 from clap_ops_service.database.models import Operator
-from clap_ops_service.services.exceptions import ConflictError, NotFoundError
+from clap_ops_service.services.exceptions import (
+    ConflictError,
+    DatabaseOperationError,
+    NotFoundError,
+)
 from clap_ops_service.services.operator_service import OperatorService
 
 
@@ -41,6 +45,15 @@ def test_create_operator_reports_duplicate_employee_code(db_session: Mock) -> No
     )
 
     with pytest.raises(ConflictError, match="employee_code already exists"):
+        OperatorService(db_session).create_operator(operator_create())
+
+    db_session.rollback.assert_called_once_with()
+
+
+def test_create_operator_reports_unexpected_database_error(db_session: Mock) -> None:
+    db_session.commit.side_effect = SQLAlchemyError("database unavailable")
+
+    with pytest.raises(DatabaseOperationError, match="Could not create operator"):
         OperatorService(db_session).create_operator(operator_create())
 
     db_session.rollback.assert_called_once_with()
