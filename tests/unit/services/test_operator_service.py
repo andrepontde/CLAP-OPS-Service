@@ -22,7 +22,6 @@ def operator_create() -> OperatorCreate:
         name="Octavio",
         last_name="Gomez",
         labor_rate=Decimal("650.00"),
-        is_operator=True,
         license_expiration_date=date(2027, 1, 1),
     )
 

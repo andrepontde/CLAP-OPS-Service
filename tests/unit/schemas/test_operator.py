@@ -13,14 +13,24 @@ from clap_ops_service.api.v1.schemas.operator import (
 )
 
 
-def test_operator_create_uses_operator_default() -> None:
+def test_operator_create_requires_license_expiration() -> None:
+    with pytest.raises(ValidationError, match="license_expiration_date"):
+        OperatorCreate(
+            name="Octavio",
+            last_name="Gomez",
+            labor_rate=Decimal("650.00"),
+        )
+
+
+def test_operator_create_accepts_license_expiration() -> None:
     operator = OperatorCreate(
         name="Octavio",
         last_name="Gomez",
         labor_rate=Decimal("650.00"),
+        license_expiration_date=date(2027, 1, 1),
     )
 
-    assert operator.is_operator is False
+    assert operator.license_expiration_date == date(2027, 1, 1)
     assert operator.email is None
 
 
@@ -31,6 +41,7 @@ def test_operator_create_accepts_nullable_contact_fields() -> None:
         phone="+5215550101234",
         email="miguel@example.com",
         labor_rate=Decimal("600.00"),
+        license_expiration_date=date(2027, 1, 1),
     )
 
     assert operator.email == "miguel@example.com"
@@ -44,6 +55,7 @@ def test_operator_create_rejects_invalid_email() -> None:
             last_name="Carlos",
             email="not-an-email",
             labor_rate=Decimal("600.00"),
+            license_expiration_date=date(2027, 1, 1),
         )
 
 
@@ -54,17 +66,13 @@ def test_operator_create_rejects_invalid_phone() -> None:
             last_name="Carlos",
             phone="555-010-1234",
             labor_rate=Decimal("600.00"),
+            license_expiration_date=date(2027, 1, 1),
         )
 
 
-def test_operator_requires_license_expiration_when_operator() -> None:
+def test_operator_update_rejects_null_license_expiration() -> None:
     with pytest.raises(ValidationError, match="license_expiration_date"):
-        OperatorCreate(
-            name="Juan",
-            last_name="Carlos",
-            labor_rate=Decimal("600.00"),
-            is_operator=True,
-        )
+        OperatorUpdate(license_expiration_date=None)
 
 
 def test_operator_update_is_partial() -> None:
@@ -85,7 +93,6 @@ def test_operator_response_reads_attributes_from_a_model() -> None:
             phone="+15550101234",
             date_of_birth=date(1990, 1, 1),
             address=None,
-            is_operator=True,
             employee_code="EMP001",
             labor_rate=Decimal("650.00"),
             license_class="B",

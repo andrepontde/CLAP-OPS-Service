@@ -27,11 +27,10 @@ def upgrade() -> None:
     sa.Column('phone', sa.String(length=20), nullable=True),
     sa.Column('date_of_birth', sa.Date(), nullable=True),
     sa.Column('address', sa.String(length=255), nullable=True),
-    sa.Column('is_operator', sa.Boolean(), server_default='false', nullable=False),
     sa.Column('employee_code', sa.String(length=6), nullable=True),
     sa.Column('labor_rate', sa.Numeric(precision=10, scale=2), nullable=False),
     sa.Column('license_class', sa.String(length=50), nullable=True),
-    sa.Column('license_expiration_date', sa.Date(), nullable=True),
+    sa.Column('license_expiration_date', sa.Date(), nullable=False),
     sa.Column('created_at', sa.DateTime(timezone=True), server_default=sa.text('clock_timestamp()'), nullable=False),
     sa.CheckConstraint('labor_rate >= 0', name='ck_operators_labor_rate_non_negative'),
     sa.PrimaryKeyConstraint('id')

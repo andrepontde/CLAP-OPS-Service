@@ -3,7 +3,7 @@ from decimal import Decimal
 from typing import Optional
 from uuid import UUID
 
-from sqlalchemy import Boolean, CheckConstraint, Date, DateTime, Numeric, String, func
+from sqlalchemy import CheckConstraint, Date, DateTime, Numeric, String, func
 from sqlalchemy.dialects.postgresql import UUID as PGUUID
 from sqlalchemy.orm import Mapped, mapped_column
 
@@ -30,9 +30,6 @@ class Operator(Base):
     phone: Mapped[Optional[str]] = mapped_column(String(20))
     date_of_birth: Mapped[Optional[date]] = mapped_column(Date)
     address: Mapped[Optional[str]] = mapped_column(String(255))
-    is_operator: Mapped[bool] = mapped_column(
-        Boolean, nullable=False, default=False, server_default="false"
-    )
     employee_code: Mapped[Optional[str]] = mapped_column(
         String(6), unique=True, nullable=True, index=True
     )
@@ -40,7 +37,7 @@ class Operator(Base):
         Numeric(10, 2), nullable=False
     )
     license_class: Mapped[Optional[str]] = mapped_column(String(50))
-    license_expiration_date: Mapped[Optional[date]] = mapped_column(Date)
+    license_expiration_date: Mapped[date] = mapped_column(Date, nullable=False)
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.clock_timestamp()
     )

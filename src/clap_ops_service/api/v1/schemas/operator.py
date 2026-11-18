@@ -18,20 +18,13 @@ class OperatorBase(BaseModel):
     )
     date_of_birth: date | None = None
     address: str | None = Field(default=None, max_length=255)
-    is_operator: bool = False
     employee_code: str | None = Field(default=None, max_length=6)
     labor_rate: Decimal = Field(
         max_digits=10, decimal_places=2, ge=0
     )
     license_class: str | None = Field(default=None, max_length=50)
-    license_expiration_date: date | None = None
+    license_expiration_date: date
     created_at: datetime | None = None
-
-    @model_validator(mode="after")
-    def require_license_expiration_for_operator(self) -> "OperatorBase":
-        if self.is_operator and self.license_expiration_date is None:
-            raise ValueError("license_expiration_date is required for operators")
-        return self
 
 
 class OperatorCreate(OperatorBase):
@@ -59,7 +52,6 @@ class OperatorUpdate(BaseModel):
     )
     date_of_birth: date | None = None
     address: str | None = Field(default=None, max_length=255)
-    is_operator: bool | None = None
     employee_code: str | None = Field(default=None, max_length=6)
     labor_rate: Decimal | None = Field(
         default=None, max_digits=10, decimal_places=2, ge=0
@@ -68,7 +60,10 @@ class OperatorUpdate(BaseModel):
     license_expiration_date: date | None = None
 
     @model_validator(mode="after")
-    def require_license_expiration_for_operator(self) -> "OperatorUpdate":
-        if self.is_operator is True and self.license_expiration_date is None:
-            raise ValueError("license_expiration_date is required for operators")
+    def reject_missing_license_expiration(self) -> "OperatorUpdate":
+        if (
+            "license_expiration_date" in self.model_fields_set
+            and self.license_expiration_date is None
+        ):
+            raise ValueError("license_expiration_date cannot be null")
         return self
