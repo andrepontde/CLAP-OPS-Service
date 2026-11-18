@@ -15,7 +15,7 @@ class OperatorService:
         self.db = db
 
     def create_operator(self, operator_data: OperatorCreate) -> Operator:
-        operator = Operator(**operator_data.model_dump(exclude={"created_at"}))
+        operator = Operator(**operator_data.model_dump())
         self.db.add(operator)
         with database_operation(
             self.db,
@@ -41,6 +41,7 @@ class OperatorService:
         operator = self.get_operator(operator_id)
         for field, value in operator_data.model_dump(exclude_unset=True).items():
             setattr(operator, field, value)
+        OperatorCreate.model_validate(operator)
         with database_operation(
             self.db,
             "update operator",

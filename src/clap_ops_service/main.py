@@ -27,7 +27,7 @@ async def database_operation_handler(
     request: Request,
     error: DatabaseOperationError,
 ) -> JSONResponse:
-    logger.exception("Database operation failed",)
+    logger.exception("Database operation failed")
     return JSONResponse(
         status_code=500,
         content={"detail": "An unexpected server error occurred"},

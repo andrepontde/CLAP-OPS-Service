@@ -3,6 +3,7 @@ from datetime import date
 from uuid import uuid4
 
 import pytest
+from pydantic import ValidationError
 from psycopg.errors import UniqueViolation
 from sqlalchemy.exc import IntegrityError, SQLAlchemyError
 
@@ -71,6 +72,20 @@ def test_update_vehicle_changes_only_supplied_fields(db_session: Mock) -> None:
     assert result.name == "Truck 2"
     db_session.commit.assert_called_once_with()
     db_session.refresh.assert_called_once_with(vehicle)
+
+
+def test_update_vehicle_rejects_invalid_programmatic_update(
+    db_session: Mock,
+) -> None:
+    vehicle_id = uuid4()
+    vehicle = Vehicle(id=vehicle_id, **vehicle_create().model_dump(exclude={"created_at"}))
+    db_session.query.return_value.filter.return_value.first.return_value = vehicle
+    update = VehicleUpdate.model_construct(current_odometer=-1)
+
+    with pytest.raises(ValidationError, match="current_odometer"):
+        VehicleService(db_session).update_vehicle(vehicle_id, update)
+
+    db_session.commit.assert_not_called()
 
 
 def test_update_vehicle_changes_vehicle_details(db_session: Mock) -> None:

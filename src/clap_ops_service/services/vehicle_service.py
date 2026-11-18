@@ -15,7 +15,7 @@ class VehicleService:
         self.db = db
 
     def create_vehicle(self, vehicle_data: VehicleCreate) -> Vehicle:
-        vehicle = Vehicle(**vehicle_data.model_dump(exclude={"created_at"}))
+        vehicle = Vehicle(**vehicle_data.model_dump())
         self.db.add(vehicle)
         with database_operation(
             self.db,
@@ -39,6 +39,7 @@ class VehicleService:
         vehicle = self.get_vehicle(vehicle_id)
         for field, value in vehicle_data.model_dump(exclude_unset=True).items():
             setattr(vehicle, field, value)
+        VehicleCreate.model_validate(vehicle)
         with database_operation(
             self.db,
             "update vehicle",

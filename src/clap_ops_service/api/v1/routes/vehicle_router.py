@@ -1,6 +1,6 @@
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, status
 from sqlalchemy.orm import Session
 
 from clap_ops_service.api.v1.dependencies import get_current_admin
@@ -14,12 +14,9 @@ from clap_ops_service.database import get_db
 from clap_ops_service.database.models import Admin
 from clap_ops_service.services.exceptions import ConflictError, NotFoundError
 from clap_ops_service.services.vehicle_service import VehicleService
+from .http_exceptions import conflict, not_found
 
 vehicle_router = APIRouter(prefix="/vehicles", tags=["vehicles"])
-
-
-def _not_found(error: NotFoundError) -> HTTPException:
-    return HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(error))
 
 
 @vehicle_router.post(
@@ -33,10 +30,7 @@ def create_vehicle(
     try:
         return VehicleService(db).create_vehicle(vehicle)
     except ConflictError as error:
-        raise HTTPException(
-            status_code=status.HTTP_409_CONFLICT,
-            detail=str(error),
-        ) from error
+        raise conflict(error) from error
 
 
 @vehicle_router.get("", response_model=VehicleList)
@@ -56,7 +50,7 @@ def get_vehicle(
     try:
         return VehicleService(db).get_vehicle(vehicle_id)
     except NotFoundError as error:
-        raise _not_found(error) from error
+        raise not_found(error) from error
 
 
 @vehicle_router.patch("/{vehicle_id}", response_model=VehicleResponse)
@@ -69,12 +63,9 @@ def update_vehicle(
     try:
         return VehicleService(db).update_vehicle(vehicle_id, vehicle)
     except NotFoundError as error:
-        raise _not_found(error) from error
+        raise not_found(error) from error
     except ConflictError as error:
-        raise HTTPException(
-            status_code=status.HTTP_409_CONFLICT,
-            detail=str(error),
-        ) from error
+        raise conflict(error) from error
 
 
 @vehicle_router.delete("/{vehicle_id}", status_code=status.HTTP_204_NO_CONTENT)
@@ -86,4 +77,4 @@ def delete_vehicle(
     try:
         VehicleService(db).delete_vehicle(vehicle_id)
     except NotFoundError as error:
-        raise _not_found(error) from error
+        raise not_found(error) from error

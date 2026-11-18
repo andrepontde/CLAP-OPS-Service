@@ -1,6 +1,6 @@
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, status
 from sqlalchemy.orm import Session
 
 from clap_ops_service.api.v1.dependencies import get_current_admin
@@ -14,12 +14,9 @@ from clap_ops_service.database import get_db
 from clap_ops_service.database.models import Admin
 from clap_ops_service.services.exceptions import ConflictError, NotFoundError
 from clap_ops_service.services.operator_service import OperatorService
+from .http_exceptions import conflict, not_found
 
 operator_router = APIRouter(prefix="/operators", tags=["operators"])
-
-
-def _not_found(error: NotFoundError) -> HTTPException:
-    return HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(error))
 
 
 @operator_router.post(
@@ -33,10 +30,7 @@ def create_operator(
     try:
         return OperatorService(db).create_operator(operator)
     except ConflictError as error:
-        raise HTTPException(
-            status_code=status.HTTP_409_CONFLICT,
-            detail=str(error),
-        ) from error
+        raise conflict(error) from error
 
 
 @operator_router.get("", response_model=OperatorList)
@@ -56,7 +50,7 @@ def get_operator(
     try:
         return OperatorService(db).get_operator(operator_id)
     except NotFoundError as error:
-        raise _not_found(error) from error
+        raise not_found(error) from error
 
 
 @operator_router.patch("/{operator_id}", response_model=OperatorResponse)
@@ -69,12 +63,9 @@ def update_operator(
     try:
         return OperatorService(db).update_operator(operator_id, operator)
     except NotFoundError as error:
-        raise _not_found(error) from error
+        raise not_found(error) from error
     except ConflictError as error:
-        raise HTTPException(
-            status_code=status.HTTP_409_CONFLICT,
-            detail=str(error),
-        ) from error
+        raise conflict(error) from error
 
 
 @operator_router.delete(
@@ -88,4 +79,4 @@ def delete_operator(
     try:
         OperatorService(db).delete_operator(operator_id)
     except NotFoundError as error:
-        raise _not_found(error) from error
+        raise not_found(error) from error

@@ -6,6 +6,7 @@ from uuid import uuid4
 import pytest
 from psycopg.errors import UniqueViolation
 from sqlalchemy.exc import IntegrityError, SQLAlchemyError
+from pydantic import ValidationError
 
 from clap_ops_service.api.v1.schemas.operator import OperatorCreate, OperatorUpdate
 from clap_ops_service.database.models import Operator
@@ -73,6 +74,23 @@ def test_update_operator_changes_only_supplied_fields(db_session: Mock) -> None:
     assert result.name == "Updated name"
     db_session.commit.assert_called_once_with()
     db_session.refresh.assert_called_once_with(operator)
+
+
+def test_update_operator_rejects_invalid_programmatic_update(
+    db_session: Mock,
+) -> None:
+    operator_id = uuid4()
+    operator = Operator(
+        id=operator_id,
+        **operator_create().model_dump(exclude={"created_at"}),
+    )
+    db_session.query.return_value.filter.return_value.first.return_value = operator
+    update = OperatorUpdate.model_construct(license_expiration_date=None)
+
+    with pytest.raises(ValidationError, match="license_expiration_date"):
+        OperatorService(db_session).update_operator(operator_id, update)
+
+    db_session.commit.assert_not_called()
 
 
 def test_get_operator_raises_when_missing(db_session: Mock) -> None:
