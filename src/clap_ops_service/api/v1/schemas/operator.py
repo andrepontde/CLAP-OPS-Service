@@ -24,7 +24,6 @@ class OperatorBase(BaseModel):
     )
     license_class: str | None = Field(default=None, max_length=50)
     license_expiration_date: date
-    created_at: datetime | None = None
 
 
 class OperatorCreate(OperatorBase):
@@ -33,6 +32,7 @@ class OperatorCreate(OperatorBase):
 
 class OperatorResponse(OperatorBase):
     id: UUID
+    created_at: datetime
 
 
 class OperatorList(BaseModel):
@@ -60,10 +60,11 @@ class OperatorUpdate(BaseModel):
     license_expiration_date: date | None = None
 
     @model_validator(mode="after")
-    def reject_missing_license_expiration(self) -> "OperatorUpdate":
-        if (
-            "license_expiration_date" in self.model_fields_set
-            and self.license_expiration_date is None
+    def reject_null_required_fields(self) -> "OperatorUpdate":
+        required_fields = {"name", "last_name", "labor_rate", "license_expiration_date"}
+        if any(
+            field in self.model_fields_set and getattr(self, field) is None
+            for field in required_fields
         ):
-            raise ValueError("license_expiration_date cannot be null")
+            raise ValueError("required fields cannot be null")
         return self

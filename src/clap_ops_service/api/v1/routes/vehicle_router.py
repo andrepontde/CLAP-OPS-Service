@@ -22,7 +22,9 @@ def _not_found(error: NotFoundError) -> HTTPException:
     return HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(error))
 
 
-@vehicle_router.post("", response_model=VehicleResponse, status_code=status.HTTP_201_CREATED)
+@vehicle_router.post(
+    "", response_model=VehicleResponse, status_code=status.HTTP_201_CREATED
+)
 def create_vehicle(
     vehicle: VehicleCreate,
     db: Session = Depends(get_db),
@@ -31,7 +33,10 @@ def create_vehicle(
     try:
         return VehicleService(db).create_vehicle(vehicle)
     except ConflictError as error:
-        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=str(error)) from error
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail=str(error),
+        ) from error
 
 
 @vehicle_router.get("", response_model=VehicleList)
@@ -66,7 +71,10 @@ def update_vehicle(
     except NotFoundError as error:
         raise _not_found(error) from error
     except ConflictError as error:
-        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=str(error)) from error
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail=str(error),
+        ) from error
 
 
 @vehicle_router.delete("/{vehicle_id}", status_code=status.HTTP_204_NO_CONTENT)

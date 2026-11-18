@@ -1,14 +1,11 @@
 from uuid import UUID
 
-from psycopg.errors import UniqueViolation
-from sqlalchemy.exc import IntegrityError, SQLAlchemyError
 from sqlalchemy.orm import Session
 
 from clap_ops_service.api.v1.schemas.operator import OperatorCreate, OperatorUpdate
 from clap_ops_service.database.models import Operator
+from clap_ops_service.services.database_helpers import database_operation
 from clap_ops_service.services.exceptions import (
-    ConflictError,
-    DatabaseOperationError,
     NotFoundError,
 )
 
@@ -20,28 +17,13 @@ class OperatorService:
     def create_operator(self, operator_data: OperatorCreate) -> Operator:
         operator = Operator(**operator_data.model_dump(exclude={"created_at"}))
         self.db.add(operator)
-        try:
+        with database_operation(
+            self.db,
+            "create operator",
+            "An operator with this employee_code already exists",
+        ):
             self.db.commit()
-        except IntegrityError as error:
-            self.db.rollback()
-            if isinstance(error.orig, UniqueViolation):
-                raise ConflictError(
-                    "An operator with this employee_code already exists"
-                ) from error
-            raise DatabaseOperationError(
-                "Could not create operator"
-            ) from error
-        except (SQLAlchemyError, OSError) as error:
-            self.db.rollback()
-            raise DatabaseOperationError(
-                "Could not create operator"
-            ) from error
-        try:
             self.db.refresh(operator)
-        except (SQLAlchemyError, OSError) as error:
-            raise DatabaseOperationError(
-                "Could not create operator"
-            ) from error
         return operator
 
     def get_operator(self, operator_id: UUID) -> Operator:
@@ -59,32 +41,17 @@ class OperatorService:
         operator = self.get_operator(operator_id)
         for field, value in operator_data.model_dump(exclude_unset=True).items():
             setattr(operator, field, value)
-        try:
+        with database_operation(
+            self.db,
+            "update operator",
+            "An operator with this employee_code already exists",
+        ):
             self.db.commit()
             self.db.refresh(operator)
-        except IntegrityError as error:
-            self.db.rollback()
-            if isinstance(error.orig, UniqueViolation):
-                raise ConflictError(
-                    "An operator with this employee_code already exists"
-                ) from error
-            raise DatabaseOperationError(
-                "Could not update operator"
-            ) from error
-        except (SQLAlchemyError, OSError) as error:
-            self.db.rollback()
-            raise DatabaseOperationError(
-                "Could not update operator"
-            ) from error
         return operator
 
     def delete_operator(self, operator_id: UUID) -> None:
         operator = self.get_operator(operator_id)
         self.db.delete(operator)
-        try:
+        with database_operation(self.db, "delete operator"):
             self.db.commit()
-        except (SQLAlchemyError, OSError) as error:
-            self.db.rollback()
-            raise DatabaseOperationError(
-                "Could not delete operator"
-            ) from error

@@ -75,6 +75,12 @@ def test_operator_update_rejects_null_license_expiration() -> None:
         OperatorUpdate(license_expiration_date=None)
 
 
+@pytest.mark.parametrize("field", ["name", "labor_rate"])
+def test_operator_update_rejects_null_required_fields(field: str) -> None:
+    with pytest.raises(ValidationError, match="required fields cannot be null"):
+        OperatorUpdate(**{field: None})
+
+
 def test_operator_update_is_partial() -> None:
     update = OperatorUpdate(name="Updated name")
 

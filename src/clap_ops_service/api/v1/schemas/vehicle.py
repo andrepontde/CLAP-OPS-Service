@@ -1,7 +1,7 @@
 from datetime import date, datetime
 import uuid
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 
 class VehicleBase(BaseModel):
@@ -23,7 +23,6 @@ class VehicleBase(BaseModel):
     insurance_expiration: date | None = None
     circulation_card_number: str | None = Field(default=None, max_length=100)
     verification_expiration: date | None = None
-    created_at: datetime | None = None
 
 
 class VehicleCreate(VehicleBase):
@@ -32,6 +31,7 @@ class VehicleCreate(VehicleBase):
 
 class VehicleResponse(VehicleBase):
     id: uuid.UUID
+    created_at: datetime
 
 
 class VehicleList(BaseModel):
@@ -58,6 +58,23 @@ class VehicleUpdate(BaseModel):
     circulation_card_number: str | None = Field(default=None, max_length=100)
     verification_expiration: date | None = None
 
-
-class VehicleStatusUpdate(BaseModel):
-    status: str = Field(pattern="^(ACTIVE|IN_MAINTENANCE|DECOMMISSIONED)$")
+    @model_validator(mode="after")
+    def reject_null_required_fields(self) -> "VehicleUpdate":
+        required_fields = {
+            "name",
+            "status",
+            "type",
+            "fuel_type",
+            "vin_sn",
+            "license_plate",
+            "year",
+            "make",
+            "model",
+            "current_odometer",
+        }
+        if any(
+            field in self.model_fields_set and getattr(self, field) is None
+            for field in required_fields
+        ):
+            raise ValueError("required fields cannot be null")
+        return self

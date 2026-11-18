@@ -30,7 +30,6 @@ def test_vehicle_create_uses_database_defaults() -> None:
     assert vehicle.insurance_expiration is None
     assert vehicle.circulation_card_number is None
     assert vehicle.verification_expiration is None
-    assert vehicle.created_at is None
 
 
 def test_vehicle_create_rejects_unknown_status() -> None:
@@ -52,6 +51,12 @@ def test_vehicle_update_is_partial() -> None:
     update = VehicleUpdate(status="IN_MAINTENANCE")
 
     assert update.model_dump(exclude_unset=True) == {"status": "IN_MAINTENANCE"}
+
+
+@pytest.mark.parametrize("field", ["name", "status"])
+def test_vehicle_update_rejects_null_required_fields(field: str) -> None:
+    with pytest.raises(ValidationError, match="required fields cannot be null"):
+        VehicleUpdate(**{field: None})
 
 
 def test_vehicle_response_reads_attributes_from_a_model() -> None:

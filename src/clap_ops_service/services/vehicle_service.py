@@ -1,14 +1,11 @@
 from uuid import UUID
 
-from psycopg.errors import UniqueViolation
-from sqlalchemy.exc import IntegrityError, SQLAlchemyError
 from sqlalchemy.orm import Session
 
 from clap_ops_service.api.v1.schemas.vehicle import VehicleCreate, VehicleUpdate
 from clap_ops_service.database.models import Vehicle
+from clap_ops_service.services.database_helpers import database_operation
 from clap_ops_service.services.exceptions import (
-    ConflictError,
-    DatabaseOperationError,
     NotFoundError,
 )
 
@@ -20,28 +17,13 @@ class VehicleService:
     def create_vehicle(self, vehicle_data: VehicleCreate) -> Vehicle:
         vehicle = Vehicle(**vehicle_data.model_dump(exclude={"created_at"}))
         self.db.add(vehicle)
-        try:
+        with database_operation(
+            self.db,
+            "create vehicle",
+            "A vehicle with this name or VIN already exists",
+        ):
             self.db.commit()
-        except IntegrityError as error:
-            self.db.rollback()
-            if isinstance(error.orig, UniqueViolation):
-                raise ConflictError(
-                    "A vehicle with this name or VIN already exists"
-                ) from error
-            raise DatabaseOperationError(
-                "Could not create vehicle"
-            ) from error
-        except (SQLAlchemyError, OSError) as error:
-            self.db.rollback()
-            raise DatabaseOperationError(
-                "Could not create vehicle"
-            ) from error
-        try:
             self.db.refresh(vehicle)
-        except (SQLAlchemyError, OSError) as error:
-            raise DatabaseOperationError(
-                "Could not create vehicle"
-            ) from error
         return vehicle
 
     def get_vehicle(self, vehicle_id: UUID) -> Vehicle:
@@ -57,32 +39,17 @@ class VehicleService:
         vehicle = self.get_vehicle(vehicle_id)
         for field, value in vehicle_data.model_dump(exclude_unset=True).items():
             setattr(vehicle, field, value)
-        try:
+        with database_operation(
+            self.db,
+            "update vehicle",
+            "A vehicle with this name or VIN already exists",
+        ):
             self.db.commit()
             self.db.refresh(vehicle)
-        except IntegrityError as error:
-            self.db.rollback()
-            if isinstance(error.orig, UniqueViolation):
-                raise ConflictError(
-                    "A vehicle with this name or VIN already exists"
-                ) from error
-            raise DatabaseOperationError(
-                "Could not update vehicle"
-            ) from error
-        except (SQLAlchemyError, OSError) as error:
-            self.db.rollback()
-            raise DatabaseOperationError(
-                "Could not update vehicle"
-            ) from error
         return vehicle
 
     def delete_vehicle(self, vehicle_id: UUID) -> None:
         vehicle = self.get_vehicle(vehicle_id)
         self.db.delete(vehicle)
-        try:
+        with database_operation(self.db, "delete vehicle"):
             self.db.commit()
-        except (SQLAlchemyError, OSError) as error:
-            self.db.rollback()
-            raise DatabaseOperationError(
-                "Could not delete vehicle"
-            ) from error
