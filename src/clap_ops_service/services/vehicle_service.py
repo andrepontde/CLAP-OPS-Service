@@ -24,10 +24,14 @@ class VehicleService:
                 raise ConflictError(
                     "A vehicle with this name or VIN already exists"
                 ) from error
-            raise RuntimeError("Unexpected database integrity error while creating vehicle") from error
+            raise RuntimeError(
+                "Unexpected database integrity error while creating vehicle"
+            ) from error
         except (SQLAlchemyError, OSError) as error:
             self.db.rollback()
-            raise RuntimeError("Unexpected error occurred while creating vehicle") from error
+            raise RuntimeError(
+                "Unexpected error occurred while creating vehicle"
+            ) from error
         self.db.refresh(vehicle)
         return vehicle
 
@@ -53,10 +57,14 @@ class VehicleService:
                 raise ConflictError(
                     "A vehicle with this name or VIN already exists"
                 ) from error
-            raise RuntimeError("Unexpected database integrity error while updating vehicle") from error
+            raise RuntimeError(
+                "Unexpected database integrity error while updating vehicle"
+            ) from error
         except (SQLAlchemyError, OSError) as error:
             self.db.rollback()
-            raise RuntimeError("Unexpected error occurred while updating vehicle") from error
+            raise RuntimeError(
+                "Unexpected error occurred while updating vehicle"
+            ) from error
         return vehicle
 
     def delete_vehicle(self, vehicle_id: UUID) -> None:
@@ -66,4 +74,6 @@ class VehicleService:
             self.db.commit()
         except (SQLAlchemyError, OSError) as error:
             self.db.rollback()
-            raise RuntimeError("Unexpected error occurred while deleting vehicle") from error
+            raise RuntimeError(
+                "Unexpected error occurred while deleting vehicle"
+            ) from error
