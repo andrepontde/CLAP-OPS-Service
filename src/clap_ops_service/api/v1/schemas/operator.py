@@ -32,6 +32,7 @@ class OperatorCreate(OperatorBase):
 
 class OperatorResponse(OperatorBase):
     id: UUID
+    fleet_id: UUID
     created_at: datetime
 
 

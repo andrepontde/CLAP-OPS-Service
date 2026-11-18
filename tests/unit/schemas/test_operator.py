@@ -89,10 +89,12 @@ def test_operator_update_is_partial() -> None:
 
 def test_operator_response_reads_attributes_from_a_model() -> None:
     operator_id = uuid4()
+    fleet_id = uuid4()
     created_at = datetime.now(timezone.utc)
     response = OperatorResponse.model_validate(
         SimpleNamespace(
             id=operator_id,
+            fleet_id=fleet_id,
             name="Octavio",
             last_name="Gomez",
             email=None,
@@ -108,5 +110,6 @@ def test_operator_response_reads_attributes_from_a_model() -> None:
     )
 
     assert response.id == operator_id
+    assert response.fleet_id == fleet_id
     assert response.labor_rate == Decimal("650.00")
     assert response.created_at == created_at

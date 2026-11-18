@@ -3,7 +3,9 @@ from uuid import UUID
 from fastapi import APIRouter, Depends, status
 from sqlalchemy.orm import Session
 
-from clap_ops_service.api.v1.dependencies import get_current_admin
+from clap_ops_service.api.v1.dependencies import (
+    require_fleet_role,
+)
 from clap_ops_service.api.v1.schemas.vehicle import (
     VehicleCreate,
     VehicleList,
@@ -11,7 +13,7 @@ from clap_ops_service.api.v1.schemas.vehicle import (
     VehicleUpdate,
 )
 from clap_ops_service.database import get_db
-from clap_ops_service.database.models import Admin
+from clap_ops_service.database.models import Fleet
 from clap_ops_service.services.exceptions import ConflictError, NotFoundError
 from clap_ops_service.services.vehicle_service import VehicleService
 from .http_exceptions import conflict, not_found
@@ -25,10 +27,10 @@ vehicle_router = APIRouter(prefix="/vehicles", tags=["vehicles"])
 def create_vehicle(
     vehicle: VehicleCreate,
     db: Session = Depends(get_db),
-    current_admin: Admin = Depends(get_current_admin),
+    fleet: Fleet = Depends(require_fleet_role("MANAGER")),
 ) -> VehicleResponse:
     try:
-        return VehicleService(db).create_vehicle(vehicle)
+        return VehicleService(db).create_vehicle(fleet.id, vehicle)
     except ConflictError as error:
         raise conflict(error) from error
 
@@ -36,19 +38,21 @@ def create_vehicle(
 @vehicle_router.get("", response_model=VehicleList)
 def list_vehicles(
     db: Session = Depends(get_db),
-    current_admin: Admin = Depends(get_current_admin),
+    fleet: Fleet = Depends(require_fleet_role("MEMBER")),
 ) -> VehicleList:
-    return VehicleList(vehicles=VehicleService(db).list_vehicles())
+    return VehicleList(
+        vehicles=VehicleService(db).list_vehicles(fleet.id)
+    )
 
 
 @vehicle_router.get("/{vehicle_id}", response_model=VehicleResponse)
 def get_vehicle(
     vehicle_id: UUID,
     db: Session = Depends(get_db),
-    current_admin: Admin = Depends(get_current_admin),
+    fleet: Fleet = Depends(require_fleet_role("MEMBER")),
 ) -> VehicleResponse:
     try:
-        return VehicleService(db).get_vehicle(vehicle_id)
+        return VehicleService(db).get_vehicle(fleet.id, vehicle_id)
     except NotFoundError as error:
         raise not_found(error) from error
 
@@ -58,10 +62,14 @@ def update_vehicle(
     vehicle_id: UUID,
     vehicle: VehicleUpdate,
     db: Session = Depends(get_db),
-    current_admin: Admin = Depends(get_current_admin),
+    fleet: Fleet = Depends(require_fleet_role("MANAGER")),
 ) -> VehicleResponse:
     try:
-        return VehicleService(db).update_vehicle(vehicle_id, vehicle)
+        return VehicleService(db).update_vehicle(
+            fleet.id,
+            vehicle_id,
+            vehicle,
+        )
     except NotFoundError as error:
         raise not_found(error) from error
     except ConflictError as error:
@@ -72,9 +80,9 @@ def update_vehicle(
 def delete_vehicle(
     vehicle_id: UUID,
     db: Session = Depends(get_db),
-    current_admin: Admin = Depends(get_current_admin),
+    fleet: Fleet = Depends(require_fleet_role("MANAGER")),
 ) -> None:
     try:
-        VehicleService(db).delete_vehicle(vehicle_id)
+        VehicleService(db).delete_vehicle(fleet.id, vehicle_id)
     except NotFoundError as error:
         raise not_found(error) from error

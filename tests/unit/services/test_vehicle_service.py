@@ -30,8 +30,11 @@ def vehicle_create() -> VehicleCreate:
     )
 
 
+FLEET_ID = uuid4()
+
+
 def test_create_vehicle_adds_commits_refreshes_and_returns_vehicle(db_session: Mock) -> None:
-    result = VehicleService(db_session).create_vehicle(vehicle_create())
+    result = VehicleService(db_session).create_vehicle(FLEET_ID, vehicle_create())
 
     assert isinstance(result, Vehicle)
     assert result.name == "Truck 1"
@@ -46,7 +49,7 @@ def test_create_vehicle_reports_duplicate_name(db_session: Mock) -> None:
     )
 
     with pytest.raises(ConflictError, match="name or VIN already exists"):
-        VehicleService(db_session).create_vehicle(vehicle_create())
+        VehicleService(db_session).create_vehicle(FLEET_ID, vehicle_create())
 
     db_session.rollback.assert_called_once_with()
 
@@ -55,18 +58,22 @@ def test_create_vehicle_reports_unexpected_database_error(db_session: Mock) -> N
     db_session.commit.side_effect = SQLAlchemyError("database unavailable")
 
     with pytest.raises(DatabaseOperationError, match="Could not create vehicle"):
-        VehicleService(db_session).create_vehicle(vehicle_create())
+        VehicleService(db_session).create_vehicle(FLEET_ID, vehicle_create())
 
     db_session.rollback.assert_called_once_with()
 
 
 def test_update_vehicle_changes_only_supplied_fields(db_session: Mock) -> None:
     vehicle_id = uuid4()
-    vehicle = Vehicle(id=vehicle_id, **vehicle_create().model_dump(exclude={"created_at"}))
+    vehicle = Vehicle(
+        id=vehicle_id,
+        fleet_id=FLEET_ID,
+        **vehicle_create().model_dump(exclude={"created_at"}),
+    )
     db_session.query.return_value.filter.return_value.first.return_value = vehicle
 
     result = VehicleService(db_session).update_vehicle(
-        vehicle_id, VehicleUpdate(name="Truck 2")
+        FLEET_ID, vehicle_id, VehicleUpdate(name="Truck 2")
     )
 
     assert result.name == "Truck 2"
@@ -78,22 +85,31 @@ def test_update_vehicle_rejects_invalid_programmatic_update(
     db_session: Mock,
 ) -> None:
     vehicle_id = uuid4()
-    vehicle = Vehicle(id=vehicle_id, **vehicle_create().model_dump(exclude={"created_at"}))
+    vehicle = Vehicle(
+        id=vehicle_id,
+        fleet_id=FLEET_ID,
+        **vehicle_create().model_dump(exclude={"created_at"}),
+    )
     db_session.query.return_value.filter.return_value.first.return_value = vehicle
     update = VehicleUpdate.model_construct(current_odometer=-1)
 
     with pytest.raises(ValidationError, match="current_odometer"):
-        VehicleService(db_session).update_vehicle(vehicle_id, update)
+        VehicleService(db_session).update_vehicle(FLEET_ID, vehicle_id, update)
 
     db_session.commit.assert_not_called()
 
 
 def test_update_vehicle_changes_vehicle_details(db_session: Mock) -> None:
     vehicle_id = uuid4()
-    vehicle = Vehicle(id=vehicle_id, **vehicle_create().model_dump(exclude={"created_at"}))
+    vehicle = Vehicle(
+        id=vehicle_id,
+        fleet_id=FLEET_ID,
+        **vehicle_create().model_dump(exclude={"created_at"}),
+    )
     db_session.query.return_value.filter.return_value.first.return_value = vehicle
 
     result = VehicleService(db_session).update_vehicle(
+        FLEET_ID,
         vehicle_id,
         VehicleUpdate(
             current_odometer=120,
@@ -115,14 +131,18 @@ def test_get_vehicle_raises_when_missing(db_session: Mock) -> None:
     db_session.query.return_value.filter.return_value.first.return_value = None
 
     with pytest.raises(NotFoundError, match="Vehicle not found"):
-        VehicleService(db_session).get_vehicle(uuid4())
+        VehicleService(db_session).get_vehicle(FLEET_ID, uuid4())
 
 
 def test_delete_vehicle_deletes_and_commits(db_session: Mock) -> None:
-    vehicle = Vehicle(id=uuid4(), **vehicle_create().model_dump(exclude={"created_at"}))
+    vehicle = Vehicle(
+        id=uuid4(),
+        fleet_id=FLEET_ID,
+        **vehicle_create().model_dump(exclude={"created_at"}),
+    )
     db_session.query.return_value.filter.return_value.first.return_value = vehicle
 
-    VehicleService(db_session).delete_vehicle(vehicle.id)
+    VehicleService(db_session).delete_vehicle(FLEET_ID, vehicle.id)
 
     db_session.delete.assert_called_once_with(vehicle)
     db_session.commit.assert_called_once_with()

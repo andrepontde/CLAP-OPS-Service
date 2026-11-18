@@ -27,10 +27,13 @@ def operator_create() -> OperatorCreate:
     )
 
 
+FLEET_ID = uuid4()
+
+
 def test_create_operator_adds_commits_refreshes_and_returns_operator(
     db_session: Mock,
 ) -> None:
-    result = OperatorService(db_session).create_operator(operator_create())
+    result = OperatorService(db_session).create_operator(FLEET_ID, operator_create())
 
     assert isinstance(result, Operator)
     assert result.name == "Octavio"
@@ -45,7 +48,7 @@ def test_create_operator_reports_duplicate_employee_code(db_session: Mock) -> No
     )
 
     with pytest.raises(ConflictError, match="employee_code already exists"):
-        OperatorService(db_session).create_operator(operator_create())
+        OperatorService(db_session).create_operator(FLEET_ID, operator_create())
 
     db_session.rollback.assert_called_once_with()
 
@@ -54,7 +57,7 @@ def test_create_operator_reports_unexpected_database_error(db_session: Mock) -> 
     db_session.commit.side_effect = SQLAlchemyError("database unavailable")
 
     with pytest.raises(DatabaseOperationError, match="Could not create operator"):
-        OperatorService(db_session).create_operator(operator_create())
+        OperatorService(db_session).create_operator(FLEET_ID, operator_create())
 
     db_session.rollback.assert_called_once_with()
 
@@ -63,12 +66,13 @@ def test_update_operator_changes_only_supplied_fields(db_session: Mock) -> None:
     operator_id = uuid4()
     operator = Operator(
         id=operator_id,
+        fleet_id=FLEET_ID,
         **operator_create().model_dump(exclude={"created_at"}),
     )
     db_session.query.return_value.filter.return_value.first.return_value = operator
 
     result = OperatorService(db_session).update_operator(
-        operator_id, OperatorUpdate(name="Updated name")
+        FLEET_ID, operator_id, OperatorUpdate(name="Updated name")
     )
 
     assert result.name == "Updated name"
@@ -82,13 +86,14 @@ def test_update_operator_rejects_invalid_programmatic_update(
     operator_id = uuid4()
     operator = Operator(
         id=operator_id,
+        fleet_id=FLEET_ID,
         **operator_create().model_dump(exclude={"created_at"}),
     )
     db_session.query.return_value.filter.return_value.first.return_value = operator
     update = OperatorUpdate.model_construct(license_expiration_date=None)
 
     with pytest.raises(ValidationError, match="license_expiration_date"):
-        OperatorService(db_session).update_operator(operator_id, update)
+        OperatorService(db_session).update_operator(FLEET_ID, operator_id, update)
 
     db_session.commit.assert_not_called()
 
@@ -97,17 +102,18 @@ def test_get_operator_raises_when_missing(db_session: Mock) -> None:
     db_session.query.return_value.filter.return_value.first.return_value = None
 
     with pytest.raises(NotFoundError, match="Operator not found"):
-        OperatorService(db_session).get_operator(uuid4())
+        OperatorService(db_session).get_operator(FLEET_ID, uuid4())
 
 
 def test_delete_operator_deletes_and_commits(db_session: Mock) -> None:
     operator = Operator(
         id=uuid4(),
+        fleet_id=FLEET_ID,
         **operator_create().model_dump(exclude={"created_at"}),
     )
     db_session.query.return_value.filter.return_value.first.return_value = operator
 
-    OperatorService(db_session).delete_operator(operator.id)
+    OperatorService(db_session).delete_operator(FLEET_ID, operator.id)
 
     db_session.delete.assert_called_once_with(operator)
     db_session.commit.assert_called_once_with()
