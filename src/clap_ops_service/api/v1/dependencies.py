@@ -1,4 +1,5 @@
-from typing import Annotated
+from dataclasses import dataclass
+from typing import Annotated, Literal
 from uuid import UUID
 
 import jwt
@@ -11,6 +12,15 @@ from clap_ops_service.database.models import Admin, Fleet, FleetMembership
 from clap_ops_service.services.auth.jwt import decode_access_token
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="api/v1/auth/login")
+FleetRole = Literal["MANAGER", "MEMBER"]
+FLEET_ROLE_RANK = {"MEMBER": 1, "MANAGER": 2}
+
+
+@dataclass(frozen=True)
+class FleetAccess:
+    fleet: Fleet
+    role: str | None
+    is_superadmin: bool
 
 
 def get_current_admin(
@@ -34,11 +44,11 @@ def get_current_admin(
     return admin
 
 
-def get_authorized_fleet(
+def get_fleet_access(
     fleet_id: Annotated[UUID, Header(alias="X-Fleet-ID")],
     db: Session = Depends(get_db),
     current_admin: Admin = Depends(get_current_admin),
-) -> Fleet:
+) -> FleetAccess:
     fleet = db.query(Fleet).filter(Fleet.id == fleet_id).first()
     if fleet is None:
         raise HTTPException(
@@ -47,7 +57,11 @@ def get_authorized_fleet(
         )
 
     if current_admin.is_superadmin:
-        return fleet
+        return FleetAccess(
+            fleet=fleet,
+            role=None,
+            is_superadmin=True,
+        )
 
     membership = (
         db.query(FleetMembership)
@@ -62,4 +76,26 @@ def get_authorized_fleet(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="You do not have access to this fleet",
         )
-    return fleet
+    return FleetAccess(
+        fleet=fleet,
+        role=membership.role,
+        is_superadmin=False,
+    )
+
+
+def require_fleet_role(required_role: FleetRole):
+    def dependency(
+        access: FleetAccess = Depends(get_fleet_access),
+    ) -> Fleet:
+        if (
+            not access.is_superadmin
+            and FLEET_ROLE_RANK.get(access.role, 0)
+            < FLEET_ROLE_RANK[required_role]
+        ):
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail=f"{required_role.title()} fleet access required",
+            )
+        return access.fleet
+
+    return dependency

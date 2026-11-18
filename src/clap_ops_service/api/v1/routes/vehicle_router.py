@@ -4,8 +4,7 @@ from fastapi import APIRouter, Depends, status
 from sqlalchemy.orm import Session
 
 from clap_ops_service.api.v1.dependencies import (
-    get_authorized_fleet,
-    get_current_admin,
+    require_fleet_role,
 )
 from clap_ops_service.api.v1.schemas.vehicle import (
     VehicleCreate,
@@ -14,7 +13,7 @@ from clap_ops_service.api.v1.schemas.vehicle import (
     VehicleUpdate,
 )
 from clap_ops_service.database import get_db
-from clap_ops_service.database.models import Admin, Fleet
+from clap_ops_service.database.models import Fleet
 from clap_ops_service.services.exceptions import ConflictError, NotFoundError
 from clap_ops_service.services.vehicle_service import VehicleService
 from .http_exceptions import conflict, not_found
@@ -28,8 +27,7 @@ vehicle_router = APIRouter(prefix="/vehicles", tags=["vehicles"])
 def create_vehicle(
     vehicle: VehicleCreate,
     db: Session = Depends(get_db),
-    current_admin: Admin = Depends(get_current_admin),
-    fleet: Fleet = Depends(get_authorized_fleet),
+    fleet: Fleet = Depends(require_fleet_role("MANAGER")),
 ) -> VehicleResponse:
     try:
         return VehicleService(db).create_vehicle(fleet.id, vehicle)
@@ -40,8 +38,7 @@ def create_vehicle(
 @vehicle_router.get("", response_model=VehicleList)
 def list_vehicles(
     db: Session = Depends(get_db),
-    current_admin: Admin = Depends(get_current_admin),
-    fleet: Fleet = Depends(get_authorized_fleet),
+    fleet: Fleet = Depends(require_fleet_role("MEMBER")),
 ) -> VehicleList:
     return VehicleList(
         vehicles=VehicleService(db).list_vehicles(fleet.id)
@@ -52,8 +49,7 @@ def list_vehicles(
 def get_vehicle(
     vehicle_id: UUID,
     db: Session = Depends(get_db),
-    current_admin: Admin = Depends(get_current_admin),
-    fleet: Fleet = Depends(get_authorized_fleet),
+    fleet: Fleet = Depends(require_fleet_role("MEMBER")),
 ) -> VehicleResponse:
     try:
         return VehicleService(db).get_vehicle(fleet.id, vehicle_id)
@@ -66,8 +62,7 @@ def update_vehicle(
     vehicle_id: UUID,
     vehicle: VehicleUpdate,
     db: Session = Depends(get_db),
-    current_admin: Admin = Depends(get_current_admin),
-    fleet: Fleet = Depends(get_authorized_fleet),
+    fleet: Fleet = Depends(require_fleet_role("MANAGER")),
 ) -> VehicleResponse:
     try:
         return VehicleService(db).update_vehicle(
@@ -85,8 +80,7 @@ def update_vehicle(
 def delete_vehicle(
     vehicle_id: UUID,
     db: Session = Depends(get_db),
-    current_admin: Admin = Depends(get_current_admin),
-    fleet: Fleet = Depends(get_authorized_fleet),
+    fleet: Fleet = Depends(require_fleet_role("MANAGER")),
 ) -> None:
     try:
         VehicleService(db).delete_vehicle(fleet.id, vehicle_id)

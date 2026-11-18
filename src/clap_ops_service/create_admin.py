@@ -1,4 +1,5 @@
 from getpass import getpass
+from uuid import UUID
 
 from pwdlib import PasswordHash
 from sqlalchemy.exc import IntegrityError
@@ -20,7 +21,7 @@ def create_admin_account(
     email: str,
     password: str,
     is_superadmin: bool,
-    fleet_ids: list[object],
+    fleet_ids: list[UUID],
 ) -> Admin:
     normalized_email = email.strip().casefold()
     if not normalized_email:
@@ -56,7 +57,7 @@ def main() -> None:
     try:
         with SessionLocal() as db:
             has_admin = db.query(Admin).first() is not None
-            fleet_ids: list[object] = []
+            fleet_ids: list[UUID] = []
 
             if not has_admin:
                 is_superadmin = True
