@@ -1,3 +1,5 @@
+from uuid import UUID
+
 from pydantic import BaseModel, EmailStr, Field
 
 
@@ -9,3 +11,16 @@ class LoginRequest(BaseModel):
 class TokenResponse(BaseModel):
     access_token: str
     token_type: str = "bearer"
+
+
+class FleetMembershipResponse(BaseModel):
+    id: UUID
+    name: str
+    role: str = Field(pattern="^(MANAGER|MEMBER)$")
+
+
+class CurrentAdminResponse(BaseModel):
+    id: int
+    email: EmailStr
+    is_superadmin: bool
+    fleets: list[FleetMembershipResponse]
