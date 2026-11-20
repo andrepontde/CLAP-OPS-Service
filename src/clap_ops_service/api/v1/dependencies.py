@@ -34,7 +34,7 @@ def get_current_admin(
     )
     try:
         payload = decode_access_token(token)
-        admin_id = int(payload["sub"])
+        admin_id = UUID(payload["sub"])
     except (jwt.InvalidTokenError, KeyError, TypeError, ValueError) as error:
         raise credentials_exception from error
 

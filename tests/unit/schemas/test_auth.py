@@ -8,8 +8,9 @@ from clap_ops_service.api.v1.schemas.auth import CurrentAdminResponse
 
 def test_current_admin_response_includes_fleet_memberships() -> None:
     fleet_id = uuid4()
+    admin_id = uuid4()
     response = CurrentAdminResponse(
-        id=1,
+        id=admin_id,
         email="admin@example.com",
         is_superadmin=False,
         fleets=[
@@ -21,6 +22,7 @@ def test_current_admin_response_includes_fleet_memberships() -> None:
         ],
     )
 
+    assert response.id == admin_id
     assert response.fleets[0].id == fleet_id
     assert response.fleets[0].role == "MANAGER"
 
@@ -28,7 +30,7 @@ def test_current_admin_response_includes_fleet_memberships() -> None:
 def test_current_admin_response_rejects_unknown_fleet_role() -> None:
     with pytest.raises(ValidationError):
         CurrentAdminResponse(
-            id=1,
+            id=uuid4(),
             email="admin@example.com",
             is_superadmin=False,
             fleets=[
