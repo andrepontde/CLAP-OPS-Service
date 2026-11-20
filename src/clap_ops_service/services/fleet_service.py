@@ -45,7 +45,7 @@ class FleetService:
     def set_membership(
         self,
         fleet_id: UUID,
-        admin_id: int,
+        admin_id: UUID,
         role: str,
     ) -> FleetMembership:
         fleet = self.db.query(Fleet).filter(Fleet.id == fleet_id).first()

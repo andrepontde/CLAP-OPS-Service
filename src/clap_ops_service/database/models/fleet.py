@@ -37,7 +37,8 @@ class FleetMembership(Base):
         ),
     )
 
-    admin_id: Mapped[int] = mapped_column(
+    admin_id: Mapped[UUID] = mapped_column(
+        PGUUID(as_uuid=True),
         ForeignKey("admins.id", ondelete="CASCADE"),
         primary_key=True,
     )

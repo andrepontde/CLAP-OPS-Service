@@ -1,6 +1,6 @@
 import os
 from datetime import datetime, timedelta, timezone
-from uuid import uuid4
+from uuid import UUID, uuid4
 
 import jwt
 
@@ -9,7 +9,7 @@ JWT_ISSUER = "clap-ops-service"
 revoked_tokens: dict[str, datetime] = {}
 
 
-def create_access_token(admin_id: int) -> str:
+def create_access_token(admin_id: UUID) -> str:
     secret = os.getenv("JWT_SECRET_KEY")
     if not secret:
         raise RuntimeError("JWT_SECRET_KEY must be configured")

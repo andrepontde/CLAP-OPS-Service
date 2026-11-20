@@ -63,7 +63,7 @@ def list_fleets(
 )
 def set_fleet_membership(
     fleet_id: UUID,
-    admin_id: int,
+    admin_id: UUID,
     membership: FleetMembershipCreate,
     db: Session = Depends(get_db),
     current_admin: Admin = Depends(get_current_admin),

@@ -28,7 +28,7 @@ def upgrade() -> None:
     sa.UniqueConstraint('name')
     )
     op.create_table('fleet_memberships',
-    sa.Column('admin_id', sa.Integer(), nullable=False),
+    sa.Column('admin_id', sa.UUID(as_uuid=True), nullable=False),
     sa.Column('fleet_id', sa.UUID(), nullable=False),
     sa.Column('role', sa.String(length=20), nullable=False),
     sa.CheckConstraint("role IN ('MANAGER', 'MEMBER')", name='ck_fleet_memberships_role'),
