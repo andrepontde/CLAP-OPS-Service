@@ -10,6 +10,7 @@ from clap_ops_service.database.models import (
     Admin,
     Fleet,
     FleetMembership,
+    FuelHistory,
     Operator,
     Vehicle,
 )
