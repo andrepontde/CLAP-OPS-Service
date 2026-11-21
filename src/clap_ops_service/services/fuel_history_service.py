@@ -68,11 +68,13 @@ class FuelHistoryService:
         fleet_id: UUID,
         entry_data: FuelHistoryCreate,
         created_by_name: str,
+        created_by_admin_id: UUID,
     ) -> FuelHistory:
         vehicle = self._get_vehicle(fleet_id, entry_data.vehicle_id)
         entry = FuelHistory(
             **entry_data.model_dump(),
             created_by_name=created_by_name,
+            created_by_admin_id=created_by_admin_id,
             fuel_price=self._fuel_price(
                 entry_data.total_price,
                 entry_data.volume,

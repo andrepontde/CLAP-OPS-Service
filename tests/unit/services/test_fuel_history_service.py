@@ -48,6 +48,7 @@ def test_create_calculates_price_links_previous_and_updates_vehicle(
         FLEET_ID,
         create_data(),
         "Fleet Admin",
+        uuid4(),
     )
 
     assert result.fuel_price == Decimal("1.5000")
@@ -69,6 +70,7 @@ def test_create_rejects_lower_odometer(db_session: Mock) -> None:
         FLEET_ID,
         create_data(odometer=900),
         "Fleet Admin",
+        uuid4(),
     )
 
     assert result.odometer == 900
@@ -91,6 +93,7 @@ def test_create_rejects_electric_vehicle(db_session: Mock) -> None:
             FLEET_ID,
             create_data(),
             "Fleet Admin",
+            uuid4(),
         )
 
     db_session.add.assert_not_called()

@@ -78,6 +78,7 @@ class ChargingHistoryService:
         fleet_id: UUID,
         entry_data: ChargingHistoryCreate,
         created_by_name: str,
+        created_by_admin_id: UUID,
     ) -> ChargingHistory:
         vehicle = self._get_vehicle(fleet_id, entry_data.vehicle_id)
         if entry_data.charging_ended_at < entry_data.charging_started_at:
@@ -96,6 +97,7 @@ class ChargingHistoryService:
         entry = ChargingHistory(
             vehicle_id=entry_data.vehicle_id,
             created_by_name=created_by_name,
+            created_by_admin_id=created_by_admin_id,
             vendor=entry_data.vendor,
             charging_started_at=entry_data.charging_started_at,
             charging_ended_at=entry_data.charging_ended_at,

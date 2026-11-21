@@ -59,6 +59,11 @@ class ChargingHistory(Base):
         index=True,
     )
     created_by_name: Mapped[str] = mapped_column(String(100), nullable=False)
+    created_by_admin_id: Mapped[Optional[UUID]] = mapped_column(
+        PGUUID(as_uuid=True),
+        ForeignKey("admins.id", ondelete="SET NULL"),
+        nullable=True,
+    )
     vendor: Mapped[str] = mapped_column(String(100), nullable=False)
     charging_started_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True),

@@ -61,6 +61,7 @@ def test_add_charging_entry_calculates_values_and_updates_vehicle(
         FLEET_ID,
         create_data(),
         "Fleet Admin",
+        uuid4(),
     )
 
     assert result.charging_duration_minutes == 90
@@ -87,6 +88,7 @@ def test_add_charging_entry_rejects_fuel_vehicle(db_session: Mock) -> None:
             FLEET_ID,
             create_data(),
             "Fleet Admin",
+            uuid4(),
         )
 
 
@@ -109,6 +111,7 @@ def test_add_charging_entry_accepts_historical_odometer(db_session: Mock) -> Non
         FLEET_ID,
         data,
         "Fleet Admin",
+        uuid4(),
     )
 
     assert result.odometer == 900
@@ -133,6 +136,7 @@ def test_add_charging_entry_rejects_end_before_start(db_session: Mock) -> None:
             FLEET_ID,
             data,
             "Fleet Admin",
+            uuid4(),
         )
 
 

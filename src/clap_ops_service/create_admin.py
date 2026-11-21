@@ -28,6 +28,8 @@ def create_admin_account(
     normalized_email = email.strip().casefold()
     if not normalized_name:
         raise ValueError("Name is required")
+    if len(normalized_name) > 100:
+        raise ValueError("Name must be at most 100 characters")
     if not normalized_email:
         raise ValueError("Email is required")
     if len(password) < MINIMUM_PASSWORD_LENGTH:

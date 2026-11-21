@@ -51,6 +51,7 @@ class ChargingHistoryResponse(BaseModel):
     id: UUID
     vehicle_id: UUID
     created_by_name: str
+    created_by_admin_id: UUID | None
     vendor: str
     charging_started_at: datetime
     charging_ended_at: datetime

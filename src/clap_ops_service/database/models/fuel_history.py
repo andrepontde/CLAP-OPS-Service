@@ -40,6 +40,11 @@ class FuelHistory(Base):
         index=True,
     )
     created_by_name: Mapped[str] = mapped_column(String(100), nullable=False)
+    created_by_admin_id: Mapped[Optional[UUID]] = mapped_column(
+        PGUUID(as_uuid=True),
+        ForeignKey("admins.id", ondelete="SET NULL"),
+        nullable=True,
+    )
     date: Mapped[date] = mapped_column(Date, nullable=False, index=True)
     odometer: Mapped[int] = mapped_column(Integer, nullable=False)
     vendor: Mapped[str] = mapped_column(String(100), nullable=False)

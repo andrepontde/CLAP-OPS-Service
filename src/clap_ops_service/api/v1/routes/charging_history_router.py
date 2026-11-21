@@ -38,6 +38,7 @@ def add_charging_entry(
             fleet.id,
             entry,
             current_admin.name,
+            current_admin.id,
         )
     except NotFoundError as error:
         raise not_found(error) from error
