@@ -127,6 +127,25 @@ def test_update_vehicle_changes_vehicle_details(db_session: Mock) -> None:
     assert result.verification_expiration == date(2027, 1, 1)
 
 
+def test_update_vehicle_to_electric_clears_fuel_type(db_session: Mock) -> None:
+    vehicle_id = uuid4()
+    vehicle = Vehicle(
+        id=vehicle_id,
+        fleet_id=FLEET_ID,
+        **vehicle_create().model_dump(exclude={"created_at"}),
+    )
+    db_session.query.return_value.filter.return_value.first.return_value = vehicle
+
+    result = VehicleService(db_session).update_vehicle(
+        FLEET_ID,
+        vehicle_id,
+        VehicleUpdate(propulsion_type="ELECTRIC"),
+    )
+
+    assert result.propulsion_type == "ELECTRIC"
+    assert result.fuel_type is None
+
+
 def test_get_vehicle_raises_when_missing(db_session: Mock) -> None:
     db_session.query.return_value.filter.return_value.first.return_value = None
 

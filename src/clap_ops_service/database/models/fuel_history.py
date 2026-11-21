@@ -39,6 +39,7 @@ class FuelHistory(Base):
         nullable=False,
         index=True,
     )
+    created_by_name: Mapped[str] = mapped_column(String(100), nullable=False)
     date: Mapped[date] = mapped_column(Date, nullable=False, index=True)
     odometer: Mapped[int] = mapped_column(Integer, nullable=False)
     vendor: Mapped[str] = mapped_column(String(100), nullable=False)

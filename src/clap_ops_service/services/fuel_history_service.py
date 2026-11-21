@@ -24,7 +24,22 @@ class FuelHistoryService:
         )
         if vehicle is None:
             raise NotFoundError("Vehicle not found")
+        if vehicle.propulsion_type == "ELECTRIC":
+            raise ConflictError("Fuel entries require a fuel or hybrid vehicle")
         return vehicle
+
+    def _rebuild_previous_entries(self, vehicle_id: UUID) -> None:
+        entries = (
+            self.db.query(FuelHistory)
+            .filter(FuelHistory.vehicle_id == vehicle_id)
+            .order_by(FuelHistory.date.asc(), FuelHistory.created_at.asc())
+            .all()
+        )
+        previous = None
+        for entry in entries:
+            entry.previous_entry_id = previous.id if previous is not None else None
+            entry.previous_entry_date = previous.date if previous is not None else None
+            previous = entry
 
     def _previous_entry(
         self,
@@ -52,31 +67,24 @@ class FuelHistoryService:
         self,
         fleet_id: UUID,
         entry_data: FuelHistoryCreate,
+        created_by_name: str,
     ) -> FuelHistory:
         vehicle = self._get_vehicle(fleet_id, entry_data.vehicle_id)
-        if entry_data.odometer < vehicle.current_odometer:
-            raise ConflictError(
-                "Odometer reading cannot be lower than the vehicle's current odometer"
-            )
-
-        previous = self._previous_entry(
-            entry_data.vehicle_id,
-            entry_data.date,
-        )
         entry = FuelHistory(
             **entry_data.model_dump(),
+            created_by_name=created_by_name,
             fuel_price=self._fuel_price(
                 entry_data.total_price,
                 entry_data.volume,
             ),
-            previous_entry_id=previous.id if previous is not None else None,
-            previous_entry_date=previous.date if previous is not None else None,
         )
         self.db.add(entry)
         if entry_data.odometer > vehicle.current_odometer:
             vehicle.current_odometer = entry_data.odometer
 
         with database_operation(self.db, "add fuel entry"):
+            self.db.flush()
+            self._rebuild_previous_entries(entry_data.vehicle_id)
             self.db.commit()
             self.db.refresh(entry)
         return entry
@@ -115,15 +123,12 @@ class FuelHistoryService:
         entry_data: FuelHistoryUpdate,
     ) -> FuelHistory:
         entry = self.get_fuel_entry(fleet_id, entry_id)
+        original_vehicle_id = entry.vehicle_id
         values = entry_data.model_dump(exclude_unset=True)
 
         vehicle_id = values.get("vehicle_id", entry.vehicle_id)
         vehicle = self._get_vehicle(fleet_id, vehicle_id)
         odometer = values.get("odometer", entry.odometer)
-        if odometer < vehicle.current_odometer:
-            raise ConflictError(
-                "Odometer reading cannot be lower than the vehicle's current odometer"
-            )
 
         for field, value in values.items():
             setattr(entry, field, value)
@@ -133,31 +138,23 @@ class FuelHistoryService:
         total_price = values.get("total_price", entry.total_price)
         entry.fuel_price = self._fuel_price(total_price, volume)
 
-        previous = self._previous_entry(vehicle_id, entry_date)
-        if previous is not None and previous.id == entry.id:
-            previous = (
-                self.db.query(FuelHistory)
-                .filter(
-                    FuelHistory.vehicle_id == vehicle_id,
-                    FuelHistory.date <= entry_date,
-                    FuelHistory.id != entry.id,
-                )
-                .order_by(FuelHistory.date.desc(), FuelHistory.created_at.desc())
-                .first()
-            )
-        entry.previous_entry_id = previous.id if previous is not None else None
-        entry.previous_entry_date = previous.date if previous is not None else None
-
         if odometer > vehicle.current_odometer:
             vehicle.current_odometer = odometer
 
         with database_operation(self.db, "update fuel entry"):
+            self.db.flush()
+            self._rebuild_previous_entries(original_vehicle_id)
+            if vehicle_id != original_vehicle_id:
+                self._rebuild_previous_entries(vehicle_id)
             self.db.commit()
             self.db.refresh(entry)
         return entry
 
     def delete_fuel_entry(self, fleet_id: UUID, entry_id: UUID) -> None:
         entry = self.get_fuel_entry(fleet_id, entry_id)
+        vehicle_id = entry.vehicle_id
         self.db.delete(entry)
         with database_operation(self.db, "delete fuel entry"):
+            self.db.flush()
+            self._rebuild_previous_entries(vehicle_id)
             self.db.commit()

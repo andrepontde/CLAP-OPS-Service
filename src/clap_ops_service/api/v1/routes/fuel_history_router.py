@@ -3,7 +3,7 @@ from uuid import UUID
 from fastapi import APIRouter, Depends, status
 from sqlalchemy.orm import Session
 
-from clap_ops_service.api.v1.dependencies import require_fleet_role
+from clap_ops_service.api.v1.dependencies import get_current_admin, require_fleet_role
 from clap_ops_service.api.v1.schemas.fuel_history import (
     FuelHistoryCreate,
     FuelHistoryList,
@@ -11,7 +11,7 @@ from clap_ops_service.api.v1.schemas.fuel_history import (
     FuelHistoryUpdate,
 )
 from clap_ops_service.database import get_db
-from clap_ops_service.database.models import Fleet
+from clap_ops_service.database.models import Admin, Fleet
 from clap_ops_service.services.exceptions import ConflictError, NotFoundError
 from clap_ops_service.services.fuel_history_service import FuelHistoryService
 from .http_exceptions import conflict, not_found
@@ -31,9 +31,14 @@ def add_fuel_entry(
     entry: FuelHistoryCreate,
     db: Session = Depends(get_db),
     fleet: Fleet = Depends(require_fleet_role("MEMBER")),
+    current_admin: Admin = Depends(get_current_admin),
 ) -> FuelHistoryResponse:
     try:
-        return FuelHistoryService(db).add_fuel_entry(fleet.id, entry)
+        return FuelHistoryService(db).add_fuel_entry(
+            fleet.id,
+            entry,
+            current_admin.name,
+        )
     except NotFoundError as error:
         raise not_found(error) from error
     except ConflictError as error:

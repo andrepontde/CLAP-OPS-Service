@@ -55,6 +55,7 @@ def get_current_admin_profile(
     )
     return CurrentAdminResponse(
         id=current_admin.id,
+        name=current_admin.name,
         email=current_admin.email,
         is_superadmin=current_admin.is_superadmin,
         fleets=[

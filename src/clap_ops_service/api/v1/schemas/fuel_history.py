@@ -35,6 +35,7 @@ class FuelHistoryResponse(BaseModel):
 
     id: UUID
     vehicle_id: UUID
+    created_by_name: str
     date: EntryDate
     odometer: int
     vendor: str

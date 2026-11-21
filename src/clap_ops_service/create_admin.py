@@ -18,18 +18,23 @@ MINIMUM_PASSWORD_LENGTH = 12
 
 def create_admin_account(
     db: Session,
+    name: str,
     email: str,
     password: str,
     is_superadmin: bool,
     fleet_ids: list[UUID],
 ) -> Admin:
+    normalized_name = name.strip()
     normalized_email = email.strip().casefold()
+    if not normalized_name:
+        raise ValueError("Name is required")
     if not normalized_email:
         raise ValueError("Email is required")
     if len(password) < MINIMUM_PASSWORD_LENGTH:
         raise ValueError(f"Password must be at least {MINIMUM_PASSWORD_LENGTH} characters")
 
     admin = Admin(
+        name=normalized_name,
         email=normalized_email,
         password_hash=PASSWORD_HASHER.hash(password),
         is_superadmin=is_superadmin,
@@ -92,6 +97,7 @@ def main() -> None:
                             raise SystemExit("Invalid fleet selection")
                         fleet_ids.append(fleets[index - 1].id)
 
+            name = input("Admin name: ").strip()
             email = input("Admin email: ").strip()
             password = getpass("Password: ")
             confirmation = getpass("Confirm password: ")
@@ -100,6 +106,7 @@ def main() -> None:
 
             admin = create_admin_account(
                 db,
+                name,
                 email,
                 password,
                 is_superadmin,

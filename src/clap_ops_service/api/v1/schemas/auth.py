@@ -21,6 +21,7 @@ class FleetMembershipResponse(BaseModel):
 
 class CurrentAdminResponse(BaseModel):
     id: UUID
+    name: str
     email: EmailStr
     is_superadmin: bool
     fleets: list[FleetMembershipResponse]
