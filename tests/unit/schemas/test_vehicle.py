@@ -95,6 +95,21 @@ def test_vehicle_create_rejects_fuel_type_for_electric() -> None:
         )
 
 
+def test_vehicle_create_rejects_empty_fuel_type() -> None:
+    with pytest.raises(ValidationError):
+        VehicleCreate(
+            name="Truck 1",
+            type="Truck",
+            propulsion_type="FUEL",
+            fuel_type="",
+            vin_sn="VIN456",
+            license_plate="XYZ123",
+            year=2024,
+            make="Ford",
+            model="Transit",
+        )
+
+
 def test_vehicle_update_is_partial() -> None:
     update = VehicleUpdate(status="IN_MAINTENANCE")
 

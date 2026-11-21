@@ -41,21 +41,6 @@ class FuelHistoryService:
             entry.previous_entry_date = previous.date if previous is not None else None
             previous = entry
 
-    def _previous_entry(
-        self,
-        vehicle_id: UUID,
-        entry_date,
-    ) -> FuelHistory | None:
-        return (
-            self.db.query(FuelHistory)
-            .filter(
-                FuelHistory.vehicle_id == vehicle_id,
-                FuelHistory.date <= entry_date,
-            )
-            .order_by(FuelHistory.date.desc(), FuelHistory.created_at.desc())
-            .first()
-        )
-
     @staticmethod
     def _fuel_price(total_price: Decimal, volume: Decimal) -> Decimal:
         return (total_price / volume).quantize(

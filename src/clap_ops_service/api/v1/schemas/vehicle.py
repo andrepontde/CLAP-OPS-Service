@@ -16,7 +16,7 @@ class VehicleBase(BaseModel):
         default="FUEL",
         pattern="^(FUEL|ELECTRIC|HYBRID)$",
     )
-    fuel_type: str | None = Field(default=None, max_length=50)
+    fuel_type: str | None = Field(default=None, min_length=1, max_length=50)
     vin_sn: str = Field(max_length=100)
     license_plate: str = Field(max_length=20)
     year: int = Field(ge=1886, le=2100)
@@ -63,7 +63,7 @@ class VehicleUpdate(BaseModel):
         default=None,
         pattern="^(FUEL|ELECTRIC|HYBRID)$",
     )
-    fuel_type: str | None = Field(default=None, max_length=50)
+    fuel_type: str | None = Field(default=None, min_length=1, max_length=50)
     vin_sn: str | None = Field(default=None, max_length=100)
     license_plate: str | None = Field(default=None, max_length=20)
     year: int | None = Field(default=None, ge=1886, le=2100)

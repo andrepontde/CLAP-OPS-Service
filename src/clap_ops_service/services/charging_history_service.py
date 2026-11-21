@@ -46,24 +46,6 @@ class ChargingHistoryService:
             )
             previous = entry
 
-    def _previous_entry(
-        self,
-        vehicle_id: UUID,
-        started_at,
-    ) -> ChargingHistory | None:
-        return (
-            self.db.query(ChargingHistory)
-            .filter(
-                ChargingHistory.vehicle_id == vehicle_id,
-                ChargingHistory.charging_started_at <= started_at,
-            )
-            .order_by(
-                ChargingHistory.charging_started_at.desc(),
-                ChargingHistory.created_at.desc(),
-            )
-            .first()
-        )
-
     @staticmethod
     def _duration_minutes(started_at, ended_at) -> int:
         seconds = int((ended_at - started_at).total_seconds())
@@ -92,8 +74,6 @@ class ChargingHistoryService:
             entry_data.total_energy_kwh * entry_data.energy_price
         )
         total_cost = energy_cost
-        if total_cost < 0:
-            raise ConflictError("Charging total cost cannot be negative")
         entry = ChargingHistory(
             vehicle_id=entry_data.vehicle_id,
             created_by_name=created_by_name,
@@ -179,8 +159,6 @@ class ChargingHistoryService:
         )
         entry.energy_cost = self._money(total_energy * energy_price)
         entry.total_cost = entry.energy_cost
-        if entry.total_cost < 0:
-            raise ConflictError("Charging total cost cannot be negative")
 
         if odometer > vehicle.current_odometer:
             vehicle.current_odometer = odometer

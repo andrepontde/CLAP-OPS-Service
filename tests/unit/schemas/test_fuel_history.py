@@ -23,6 +23,19 @@ def test_fuel_history_create_accepts_required_fields() -> None:
     assert entry.total_price == Decimal("75.00")
 
 
+def test_fuel_history_create_rejects_empty_fuel_type() -> None:
+    with pytest.raises(ValidationError):
+        FuelHistoryCreate(
+            vehicle_id=uuid4(),
+            date=date(2026, 11, 21),
+            odometer=12345,
+            vendor="Fuel Stop",
+            fuel_type="",
+            volume=Decimal("50.000"),
+            total_price=Decimal("75.00"),
+        )
+
+
 @pytest.mark.parametrize(
     ("field", "value"),
     [
