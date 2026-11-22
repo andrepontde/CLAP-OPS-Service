@@ -22,8 +22,8 @@ class ChargingHistory(Base):
     __tablename__ = "charging_history"
     __table_args__ = (
         CheckConstraint(
-            "odometer >= 0",
-            name="ck_charging_history_odometer_non_negative",
+            "odometer BETWEEN 0 AND 2147483647",
+            name="ck_charging_history_odometer_range",
         ),
         CheckConstraint(
             "charging_duration_minutes >= 0",

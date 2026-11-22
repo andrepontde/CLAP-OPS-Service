@@ -22,7 +22,10 @@ from ..connection import Base
 class FuelHistory(Base):
     __tablename__ = "fuel_history"
     __table_args__ = (
-        CheckConstraint("odometer >= 0", name="ck_fuel_history_odometer_non_negative"),
+        CheckConstraint(
+            "odometer BETWEEN 0 AND 2147483647",
+            name="ck_fuel_history_odometer_range",
+        ),
         CheckConstraint("volume > 0", name="ck_fuel_history_volume_positive"),
         CheckConstraint("fuel_price >= 0", name="ck_fuel_history_fuel_price_non_negative"),
         CheckConstraint("total_price >= 0", name="ck_fuel_history_total_price_non_negative"),

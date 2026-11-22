@@ -35,3 +35,18 @@ def test_charging_history_rejects_end_before_start() -> None:
             total_energy_kwh=Decimal("40.000"),
             energy_price=Decimal("0.3000"),
         )
+
+
+def test_charging_history_rejects_odometer_out_of_range() -> None:
+    started = datetime(2026, 11, 21, 14, 0, tzinfo=timezone.utc)
+
+    with pytest.raises(ValidationError):
+        ChargingHistoryCreate(
+            vehicle_id=uuid4(),
+            vendor="Charge Station",
+            charging_started_at=started,
+            charging_ended_at=started + timedelta(minutes=90),
+            odometer=23_123_123_123,
+            total_energy_kwh=Decimal("40.000"),
+            energy_price=Decimal("0.3000"),
+        )

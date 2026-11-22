@@ -32,8 +32,8 @@ class Vehicle(Base):
             name="ck_vehicles_status",
         ),
         CheckConstraint(
-            "current_odometer >= 0",
-            name="ck_vehicles_current_odometer_non_negative",
+            "current_odometer BETWEEN 0 AND 2147483647",
+            name="ck_vehicles_current_odometer_range",
         ),
         CheckConstraint(
             "year BETWEEN 1886 AND 2100",

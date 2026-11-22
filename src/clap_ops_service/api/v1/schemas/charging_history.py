@@ -12,7 +12,7 @@ class ChargingHistoryCreate(BaseModel):
     vendor: str = Field(max_length=100)
     charging_started_at: datetime
     charging_ended_at: datetime
-    odometer: int = Field(ge=0)
+    odometer: int = Field(ge=0, le=2_147_483_647)
     total_energy_kwh: Decimal = Field(gt=0, decimal_places=3)
     energy_price: Decimal = Field(ge=0, decimal_places=4)
 
@@ -30,7 +30,7 @@ class ChargingHistoryUpdate(BaseModel):
     vendor: str | None = Field(default=None, max_length=100)
     charging_started_at: datetime | None = None
     charging_ended_at: datetime | None = None
-    odometer: int | None = Field(default=None, ge=0)
+    odometer: int | None = Field(default=None, ge=0, le=2_147_483_647)
     total_energy_kwh: Decimal | None = Field(default=None, gt=0, decimal_places=3)
     energy_price: Decimal | None = Field(default=None, ge=0, decimal_places=4)
 

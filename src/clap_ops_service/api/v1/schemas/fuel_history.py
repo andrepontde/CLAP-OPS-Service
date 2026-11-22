@@ -11,7 +11,7 @@ class FuelHistoryCreate(BaseModel):
 
     vehicle_id: UUID
     date: EntryDate
-    odometer: int = Field(ge=0)
+    odometer: int = Field(ge=0, le=2_147_483_647)
     vendor: str = Field(max_length=100)
     fuel_type: str = Field(min_length=1, max_length=50)
     volume: Decimal = Field(gt=0, decimal_places=3)
@@ -23,7 +23,7 @@ class FuelHistoryUpdate(BaseModel):
 
     vehicle_id: UUID | None = None
     date: EntryDate | None = None
-    odometer: int | None = Field(default=None, ge=0)
+    odometer: int | None = Field(default=None, ge=0, le=2_147_483_647)
     vendor: str | None = Field(default=None, max_length=100)
     fuel_type: str | None = Field(default=None, min_length=1, max_length=50)
     volume: Decimal | None = Field(default=None, gt=0, decimal_places=3)

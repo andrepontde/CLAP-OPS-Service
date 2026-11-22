@@ -22,7 +22,7 @@ class VehicleBase(BaseModel):
     year: int = Field(ge=1886, le=2100)
     make: str = Field(max_length=50)
     model: str = Field(max_length=50)
-    current_odometer: int = Field(default=0, ge=0)
+    current_odometer: int = Field(default=0, ge=0, le=2_147_483_647)
     insurance_policy_number: str | None = Field(default=None, max_length=100)
     insurance_expiration: date | None = None
     circulation_card_number: str | None = Field(default=None, max_length=100)
@@ -69,7 +69,7 @@ class VehicleUpdate(BaseModel):
     year: int | None = Field(default=None, ge=1886, le=2100)
     make: str | None = Field(default=None, max_length=50)
     model: str | None = Field(default=None, max_length=50)
-    current_odometer: int | None = Field(default=None, ge=0)
+    current_odometer: int | None = Field(default=None, ge=0, le=2_147_483_647)
     insurance_policy_number: str | None = Field(default=None, max_length=100)
     insurance_expiration: date | None = None
     circulation_card_number: str | None = Field(default=None, max_length=100)

@@ -36,6 +36,19 @@ def test_fuel_history_create_rejects_empty_fuel_type() -> None:
         )
 
 
+def test_fuel_history_create_rejects_odometer_out_of_range() -> None:
+    with pytest.raises(ValidationError):
+        FuelHistoryCreate(
+            vehicle_id=uuid4(),
+            date=date(2026, 11, 21),
+            odometer=23_123_123_123,
+            vendor="Fuel Stop",
+            fuel_type="Diesel",
+            volume=Decimal("50.000"),
+            total_price=Decimal("75.00"),
+        )
+
+
 @pytest.mark.parametrize(
     ("field", "value"),
     [
