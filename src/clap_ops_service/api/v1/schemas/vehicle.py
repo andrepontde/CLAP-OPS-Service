@@ -12,17 +12,29 @@ class VehicleBase(BaseModel):
         default="ACTIVE", pattern="^(ACTIVE|IN_MAINTENANCE|DECOMMISSIONED)$"
     )
     type: str = Field(max_length=50)
-    fuel_type: str = Field(max_length=50)
+    propulsion_type: str = Field(
+        default="FUEL",
+        pattern="^(FUEL|ELECTRIC|HYBRID)$",
+    )
+    fuel_type: str | None = Field(default=None, min_length=1, max_length=50)
     vin_sn: str = Field(max_length=100)
     license_plate: str = Field(max_length=20)
     year: int = Field(ge=1886, le=2100)
     make: str = Field(max_length=50)
     model: str = Field(max_length=50)
-    current_odometer: int = Field(default=0, ge=0)
+    current_odometer: int = Field(default=0, ge=0, le=2_147_483_647)
     insurance_policy_number: str | None = Field(default=None, max_length=100)
     insurance_expiration: date | None = None
     circulation_card_number: str | None = Field(default=None, max_length=100)
     verification_expiration: date | None = None
+
+    @model_validator(mode="after")
+    def validate_fuel_type_for_propulsion(self) -> "VehicleBase":
+        if self.propulsion_type == "ELECTRIC" and self.fuel_type is not None:
+            raise ValueError("fuel type must be null for electric vehicles")
+        if self.propulsion_type in ("FUEL", "HYBRID") and not self.fuel_type:
+            raise ValueError("fuel type is required for fuel and hybrid vehicles")
+        return self
 
 
 class VehicleCreate(VehicleBase):
@@ -47,13 +59,17 @@ class VehicleUpdate(BaseModel):
         default=None, pattern="^(ACTIVE|IN_MAINTENANCE|DECOMMISSIONED)$"
     )
     type: str | None = Field(default=None, max_length=50)
-    fuel_type: str | None = Field(default=None, max_length=50)
+    propulsion_type: str | None = Field(
+        default=None,
+        pattern="^(FUEL|ELECTRIC|HYBRID)$",
+    )
+    fuel_type: str | None = Field(default=None, min_length=1, max_length=50)
     vin_sn: str | None = Field(default=None, max_length=100)
     license_plate: str | None = Field(default=None, max_length=20)
     year: int | None = Field(default=None, ge=1886, le=2100)
     make: str | None = Field(default=None, max_length=50)
     model: str | None = Field(default=None, max_length=50)
-    current_odometer: int | None = Field(default=None, ge=0)
+    current_odometer: int | None = Field(default=None, ge=0, le=2_147_483_647)
     insurance_policy_number: str | None = Field(default=None, max_length=100)
     insurance_expiration: date | None = None
     circulation_card_number: str | None = Field(default=None, max_length=100)
@@ -65,7 +81,7 @@ class VehicleUpdate(BaseModel):
             "name",
             "status",
             "type",
-            "fuel_type",
+            "propulsion_type",
             "vin_sn",
             "license_plate",
             "year",

@@ -15,6 +15,7 @@ class Admin(Base):
         primary_key=True,
         server_default=func.gen_random_uuid(),
     )
+    name: Mapped[str] = mapped_column(String(100), nullable=False)
     email: Mapped[str] = mapped_column(String(320), unique=True, index=True)
     password_hash: Mapped[str] = mapped_column(String(255))
     is_superadmin: Mapped[bool] = mapped_column(

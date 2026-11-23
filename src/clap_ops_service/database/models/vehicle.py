@@ -24,12 +24,16 @@ class Vehicle(Base):
         UniqueConstraint("fleet_id", "name", name="uq_vehicles_fleet_name"),
         UniqueConstraint("fleet_id", "vin_sn", name="uq_vehicles_fleet_vin"),
         CheckConstraint(
+            "propulsion_type IN ('FUEL', 'ELECTRIC', 'HYBRID')",
+            name="ck_vehicles_propulsion_type",
+        ),
+        CheckConstraint(
             "status IN ('ACTIVE', 'IN_MAINTENANCE', 'DECOMMISSIONED')",
             name="ck_vehicles_status",
         ),
         CheckConstraint(
-            "current_odometer >= 0",
-            name="ck_vehicles_current_odometer_non_negative",
+            "current_odometer BETWEEN 0 AND 2147483647",
+            name="ck_vehicles_current_odometer_range",
         ),
         CheckConstraint(
             "year BETWEEN 1886 AND 2100",
@@ -58,7 +62,13 @@ class Vehicle(Base):
         server_default="ACTIVE",
     )
     type: Mapped[str] = mapped_column(String(50), nullable=False)
-    fuel_type: Mapped[str] = mapped_column(String(50), nullable=False)
+    propulsion_type: Mapped[str] = mapped_column(
+        String(25),
+        nullable=False,
+        default="FUEL",
+        server_default="FUEL",
+    )
+    fuel_type: Mapped[Optional[str]] = mapped_column(String(50))
     vin_sn: Mapped[str] = mapped_column(
         String(100), nullable=False
     )

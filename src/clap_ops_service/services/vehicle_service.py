@@ -61,7 +61,10 @@ class VehicleService:
         vehicle_data: VehicleUpdate,
     ) -> Vehicle:
         vehicle = self.get_vehicle(fleet_id, vehicle_id)
-        for field, value in vehicle_data.model_dump(exclude_unset=True).items():
+        values = vehicle_data.model_dump(exclude_unset=True)
+        if values.get("propulsion_type") == "ELECTRIC":
+            values["fuel_type"] = None
+        for field, value in values.items():
             setattr(vehicle, field, value)
         VehicleCreate.model_validate(vehicle)
         with database_operation(

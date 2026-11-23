@@ -47,6 +47,69 @@ def test_vehicle_create_rejects_unknown_status() -> None:
         )
 
 
+def test_vehicle_create_accepts_electric_without_fuel_type() -> None:
+    vehicle = VehicleCreate(
+        name="Car 1",
+        type="Car",
+        propulsion_type="ELECTRIC",
+        fuel_type=None,
+        vin_sn="VIN456",
+        license_plate="XYZ123",
+        year=2024,
+        make="Nissan",
+        model="Leaf",
+    )
+
+    assert vehicle.propulsion_type == "ELECTRIC"
+    assert vehicle.fuel_type is None
+
+
+@pytest.mark.parametrize("propulsion_type", ["FUEL", "HYBRID"])
+def test_vehicle_create_requires_fuel_type(propulsion_type: str) -> None:
+    with pytest.raises(ValidationError, match="fuel type is required"):
+        VehicleCreate(
+            name="Vehicle 1",
+            type="Vehicle",
+            propulsion_type=propulsion_type,
+            fuel_type=None,
+            vin_sn="VIN789",
+            license_plate="ABC789",
+            year=2024,
+            make="Example",
+            model="Model",
+        )
+
+
+def test_vehicle_create_rejects_fuel_type_for_electric() -> None:
+    with pytest.raises(ValidationError, match="fuel type must be null"):
+        VehicleCreate(
+            name="Car 1",
+            type="Car",
+            propulsion_type="ELECTRIC",
+            fuel_type="Petrol",
+            vin_sn="VIN456",
+            license_plate="XYZ123",
+            year=2024,
+            make="Nissan",
+            model="Leaf",
+        )
+
+
+def test_vehicle_create_rejects_empty_fuel_type() -> None:
+    with pytest.raises(ValidationError):
+        VehicleCreate(
+            name="Truck 1",
+            type="Truck",
+            propulsion_type="FUEL",
+            fuel_type="",
+            vin_sn="VIN456",
+            license_plate="XYZ123",
+            year=2024,
+            make="Ford",
+            model="Transit",
+        )
+
+
 def test_vehicle_update_is_partial() -> None:
     update = VehicleUpdate(status="IN_MAINTENANCE")
 

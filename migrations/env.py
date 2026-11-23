@@ -8,8 +8,10 @@ from sqlalchemy import engine_from_config, pool
 from clap_ops_service.database import Base
 from clap_ops_service.database.models import (
     Admin,
+    ChargingHistory,
     Fleet,
     FleetMembership,
+    FuelHistory,
     Operator,
     Vehicle,
 )

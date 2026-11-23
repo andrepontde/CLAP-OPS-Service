@@ -11,6 +11,7 @@ def test_current_admin_response_includes_fleet_memberships() -> None:
     admin_id = uuid4()
     response = CurrentAdminResponse(
         id=admin_id,
+        name="Fleet Admin",
         email="admin@example.com",
         is_superadmin=False,
         fleets=[
@@ -31,6 +32,7 @@ def test_current_admin_response_rejects_unknown_fleet_role() -> None:
     with pytest.raises(ValidationError):
         CurrentAdminResponse(
             id=uuid4(),
+            name="Fleet Admin",
             email="admin@example.com",
             is_superadmin=False,
             fleets=[
